@@ -10,6 +10,8 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/leanbackassistant" />
             <option value="$PROJECT_DIR$/myvideotube" />
+            <option value="$PROJECT_DIR$/../MyVideoTubeApi/myvideotubeapi" />
+            <option value="$PROJECT_DIR$/../MyVideoTubeApi/youtubeapi" />
             <option value="$PROJECT_DIR$/../SharedUtils/sharedutils" />
           </set>
         </option>
