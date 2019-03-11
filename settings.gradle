@@ -1,0 +1,5 @@
+include ':myvideotube', ':leanbackassistant'
+
+gradle.ext.sharedUtilsRoot = '../SharedUtils'
+gradle.ext.sharedUtilsModulePrefix = 'ext-'
+apply from: new File(gradle.ext.sharedUtilsRoot, 'core_settings.gradle')

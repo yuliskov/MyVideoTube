@@ -1,0 +1,32 @@
+apply from: '../../SharedUtils/constants.gradle'
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion project.ext.compileSdkVersion
+    buildToolsVersion project.ext.buildToolsVersion
+    testOptions.unitTests.includeAndroidResources = true
+
+    defaultConfig {
+        applicationId "com.liskovsoft.myvideotube"
+        minSdkVersion 17
+        targetSdkVersion project.ext.targetSdkVersion
+        versionCode 5
+        versionName "0.0.5"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation 'com.android.support:leanback-v17:' + supportLibraryVersion
+    implementation 'com.android.support:appcompat-v7:' + supportLibraryVersion
+    implementation 'com.github.bumptech.glide:glide:' + glideVersion
+}
