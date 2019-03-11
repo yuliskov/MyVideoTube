@@ -1,7 +1,4 @@
-include ':myvideotube', ':leanbackassistant'
+gradle.ext.myVideoTubeRoot = settingsDir
+apply from: 'core_settings.gradle'
 
-gradle.ext.sharedUtilsRoot = '../SharedUtils'
-apply from: new File(gradle.ext.sharedUtilsRoot, 'core_settings.gradle')
-
-gradle.ext.myVideoTubeApiRoot = '../MyVideoTubeApi'
-apply from: new File(gradle.ext.myVideoTubeApiRoot, 'core_settings.gradle')
+include ':myvideotube'
