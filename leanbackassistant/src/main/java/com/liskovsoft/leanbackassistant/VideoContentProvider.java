@@ -10,7 +10,9 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
+import com.liskovsoft.sharedutils.mylogger.Log;
+import com.liskovsoft.sharedutils.rx.AppSchedulerProvider;
+import com.liskovsoft.sharedutils.rx.SchedulerProvider;
 import com.liskovsoft.myvideotubeapi.Video;
 import com.liskovsoft.myvideotubeapi.VideoService;
 import com.liskovsoft.youtubeapi.adapters.YouTubeVideoService;
@@ -57,6 +59,7 @@ public class VideoContentProvider extends ContentProvider {
                 SearchManager.SUGGEST_COLUMN_INTENT_DATA_ID
             };
     private CompositeDisposable mDisposable;
+    private SchedulerProvider mSchedulerProvider;
 
     @Override
     public boolean onCreate() {
@@ -103,15 +106,28 @@ public class VideoContentProvider extends ContentProvider {
 
         MatrixCursor matrixCursor = new MatrixCursor(queryProjection);
 
-        getCompositeDisposable().add(results.subscribe(videos -> {
-            if (videos != null) {
-                for (Video video : videos) {
-                    matrixCursor.addRow(convertVideoIntoRow(video));
-                }
-            }
+        getCompositeDisposable().add(results
+                .subscribeOn(getSchedulerProvider().io())
+                .observeOn(getSchedulerProvider().ui())
+                .subscribe(videos -> {
+                    Log.d(TAG, "Search result received: " + videos);
+
+                    if (videos != null) {
+                        for (Video video : videos) {
+                            matrixCursor.addRow(convertVideoIntoRow(video));
+                        }
+                    }
         }));
 
         return matrixCursor;
+    }
+
+    private SchedulerProvider getSchedulerProvider() {
+        if (mSchedulerProvider == null) {
+            mSchedulerProvider = new AppSchedulerProvider();
+        }
+
+        return mSchedulerProvider;
     }
 
     private CompositeDisposable getCompositeDisposable() {
