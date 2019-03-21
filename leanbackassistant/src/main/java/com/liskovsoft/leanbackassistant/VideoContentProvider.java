@@ -16,7 +16,6 @@ import com.liskovsoft.sharedutils.rx.SchedulerProvider;
 import com.liskovsoft.myvideotubeapi.Video;
 import com.liskovsoft.myvideotubeapi.VideoService;
 import com.liskovsoft.youtubeapi.adapters.YouTubeVideoService;
-import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 
 import java.util.List;
@@ -30,7 +29,7 @@ import java.util.List;
  */
 public class VideoContentProvider extends ContentProvider {
     private static final String TAG = "VideoContentProvider";
-    private static final String AUTHORITY = "com.example.android.assistantplayback";
+    private static final String AUTHORITY = "com.liskovsoft.leanbackassistant";
     private VideoService mService;
 
     // UriMatcher constant for search suggestions
@@ -60,6 +59,7 @@ public class VideoContentProvider extends ContentProvider {
             };
     private CompositeDisposable mDisposable;
     private SchedulerProvider mSchedulerProvider;
+    private static List<Video> mCachedVideos;
 
     @Override
     public boolean onCreate() {
@@ -101,23 +101,34 @@ public class VideoContentProvider extends ContentProvider {
         }
     }
 
+    public static Video findVideoWithId(int id) {
+        if (mCachedVideos == null) {
+            return null;
+        }
+
+        for (Video video : mCachedVideos) {
+            if (video.getId() == id) {
+                return video;
+            }
+        }
+
+        return null;
+    }
+
     private Cursor search(String query) {
-        Observable<List<Video>> results = mService.findVideos(query);
+        List<Video> videos = mService.findVideos2(query);
 
         MatrixCursor matrixCursor = new MatrixCursor(queryProjection);
 
-        getCompositeDisposable().add(results
-                .subscribeOn(getSchedulerProvider().io())
-                .observeOn(getSchedulerProvider().ui())
-                .subscribe(videos -> {
-                    Log.d(TAG, "Search result received: " + videos);
+        Log.d(TAG, "Search result received: " + videos);
 
-                    if (videos != null) {
-                        for (Video video : videos) {
-                            matrixCursor.addRow(convertVideoIntoRow(video));
-                        }
-                    }
-        }));
+        if (videos != null) {
+            for (Video video : videos) {
+                matrixCursor.addRow(convertVideoIntoRow(video));
+            }
+
+            mCachedVideos = videos;
+        }
 
         return matrixCursor;
     }
