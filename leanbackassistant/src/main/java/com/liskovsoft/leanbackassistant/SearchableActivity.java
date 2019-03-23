@@ -16,7 +16,6 @@ import static android.support.v4.content.IntentCompat.EXTRA_START_PLAYBACK;
 
 public class SearchableActivity extends Activity {
     private static final String TAG = "SearchableActivity";
-    private ConfigParser mParser;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -36,9 +35,11 @@ public class SearchableActivity extends Activity {
 
                 if (url != null) {
                     Intent intent = new Intent();
+                    intent.setAction(Intent.ACTION_VIEW);
                     intent.setData(Uri.parse(url));
                     AppUtil appUtil = new AppUtil(this);
                     intent.setClassName(appUtil.getAppPackageName(), appUtil.getBootstrapClassName());
+                    Log.d(TAG, "Starting search intent: " + intent);
                     startActivity(intent);
                 }
             }

@@ -18,6 +18,7 @@ import com.liskovsoft.myvideotubeapi.VideoService;
 import com.liskovsoft.youtubeapi.adapters.YouTubeVideoService;
 import io.reactivex.disposables.CompositeDisposable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -93,7 +94,9 @@ public class VideoContentProvider extends ContentProvider {
         if (mUriMatcher.match(uri) == SEARCH_SUGGEST) {
             Log.d(TAG, "Search suggestions requested.");
 
-            return search(uri.getLastPathSegment());
+            String limitStr = uri.getQueryParameter("limit");
+            int limit = limitStr != null ? Integer.parseInt(limitStr) : 20;
+            return search(uri.getLastPathSegment(), limit);
 
         } else {
             Log.d(TAG, "Unknown uri to query: " + uri);
@@ -115,22 +118,47 @@ public class VideoContentProvider extends ContentProvider {
         return null;
     }
 
-    private Cursor search(String query) {
+    private Cursor search(String query, int limit) {
         List<Video> videos = mService.findVideos2(query);
 
         MatrixCursor matrixCursor = new MatrixCursor(queryProjection);
 
         Log.d(TAG, "Search result received: " + videos);
 
-        if (videos != null) {
-            for (Video video : videos) {
-                matrixCursor.addRow(convertVideoIntoRow(video));
-            }
+        mCachedVideos = new ArrayList<>();
 
-            mCachedVideos = videos;
-        }
+        apply(matrixCursor, videos, limit);
 
         return matrixCursor;
+    }
+
+    private void nextSearch(MatrixCursor cursor, int limit) {
+        List<Video> videos = mService.getNextSearchPage();
+
+        Log.d(TAG, "Next search result received: " + videos);
+
+        apply(cursor, videos, limit);
+    }
+
+    private void apply(MatrixCursor matrixCursor, List<Video> videos, int limit) {
+        if (videos != null) {
+            int idx = 0;
+
+            for (Video video : videos) {
+                matrixCursor.addRow(convertVideoIntoRow(video));
+                idx++;
+
+                if (idx == limit) {
+                    break;
+                }
+            }
+
+            mCachedVideos.addAll(videos);
+
+            if (idx < limit) {
+                nextSearch(matrixCursor, limit - idx);
+            }
+        }
     }
 
     private SchedulerProvider getSchedulerProvider() {
