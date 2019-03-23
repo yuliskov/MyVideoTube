@@ -147,10 +147,6 @@ public class VideoContentProvider extends ContentProvider {
             for (Video video : videos) {
                 matrixCursor.addRow(convertVideoIntoRow(video));
                 idx++;
-
-                if (idx == limit) {
-                    break;
-                }
             }
 
             mCachedVideos.addAll(videos);
