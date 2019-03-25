@@ -1,6 +1,7 @@
 package com.liskovsoft.leanbackassistant;
 
 import android.app.SearchManager;
+import android.content.ComponentName;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.UriMatcher;
@@ -10,6 +11,7 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import com.liskovsoft.sharedutils.helpers.AppInfoHelpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.AppSchedulerProvider;
 import com.liskovsoft.sharedutils.rx.SchedulerProvider;
@@ -29,7 +31,7 @@ import java.util.List;
  * This class enables <a href="https://developer.android.com/training/tv/discovery/searchable.html">on-device search.</a>.
  */
 public class VideoContentProvider extends ContentProvider {
-    private static final String TAG = "VideoContentProvider";
+    private static final String TAG = VideoContentProvider.class.getSimpleName();
     private static final String AUTHORITY = "com.liskovsoft.leanbackassistant";
     private VideoService mService;
 
@@ -71,10 +73,8 @@ public class VideoContentProvider extends ContentProvider {
 
     private UriMatcher buildUriMatcher() {
         UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        uriMatcher.addURI(
-                AUTHORITY, "/search/" + SearchManager.SUGGEST_URI_PATH_QUERY, SEARCH_SUGGEST);
-        uriMatcher.addURI(
-                AUTHORITY,
+        uriMatcher.addURI(AUTHORITY, "/search/" + SearchManager.SUGGEST_URI_PATH_QUERY, SEARCH_SUGGEST);
+        uriMatcher.addURI(AUTHORITY,
                 "/search/" + SearchManager.SUGGEST_URI_PATH_QUERY + "/*",
                 SEARCH_SUGGEST);
         return uriMatcher;
