@@ -5,14 +5,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import com.liskovsoft.leanbackassistant.utils.AppUtil;
 import com.liskovsoft.myvideotubeapi.Video;
 import com.liskovsoft.sharedutils.configparser.AssetPropertyParser2;
 import com.liskovsoft.sharedutils.configparser.ConfigParser;
 import com.liskovsoft.sharedutils.mylogger.Log;
 
-import static android.support.v4.content.IntentCompat.EXTRA_START_PLAYBACK;
+import static androidx.core.content.IntentCompat.EXTRA_START_PLAYBACK;
 
 public class SearchableActivity extends Activity {
     private static final String TAG = "SearchableActivity";

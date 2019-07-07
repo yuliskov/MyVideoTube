@@ -1,7 +1,6 @@
 package com.liskovsoft.leanbackassistant;
 
 import android.app.SearchManager;
-import android.content.ComponentName;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.UriMatcher;
@@ -9,14 +8,13 @@ import android.database.Cursor;
 import android.database.MatrixCursor;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import com.liskovsoft.sharedutils.helpers.AppInfoHelpers;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import com.liskovsoft.myvideotubeapi.Video;
+import com.liskovsoft.myvideotubeapi.VideoService;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.AppSchedulerProvider;
 import com.liskovsoft.sharedutils.rx.SchedulerProvider;
-import com.liskovsoft.myvideotubeapi.Video;
-import com.liskovsoft.myvideotubeapi.VideoService;
 import com.liskovsoft.youtubeapi.adapters.YouTubeVideoService;
 import io.reactivex.disposables.CompositeDisposable;
 
