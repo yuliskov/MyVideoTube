@@ -1,3 +1,6 @@
 [submodule "SharedUtils"]
 	path = SharedUtils
 	url = https://github.com/yuliskov/SharedUtils
+[submodule "MyVideoTubeApi"]
+	path = MyVideoTubeApi
+	url = https://github.com/yuliskov/MyVideoTubeApi
