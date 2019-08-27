@@ -1,4 +1,4 @@
-package com.liskovsoft.leanbackassistant;
+package com.liskovsoft.leanbackassistant.search;
 
 import android.annotation.TargetApi;
 import android.app.SearchManager;

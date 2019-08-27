@@ -8,7 +8,7 @@
                  android:theme="@style/AppTheme">
 
         <activity
-            android:name=".SearchableActivity"
+            android:name=".search.SearchableActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
@@ -22,7 +22,7 @@
                 android:resource="@xml/searchable" />
         </activity>
 
-        <provider android:name=".VideoContentProvider"
+        <provider android:name=".search.VideoContentProvider"
                   android:authorities="com.liskovsoft.leanbackassistant"
                   android:exported="true"
                   tools:ignore="ExportedContentProvider" />
