@@ -117,7 +117,7 @@ public class VideoContentProvider extends ContentProvider {
     }
 
     private Cursor search(String query, int limit) {
-        List<Video> videos = mService.findVideos2(query);
+        List<Video> videos = mService.getSearch(query);
 
         MatrixCursor matrixCursor = new MatrixCursor(queryProjection);
 
@@ -131,7 +131,7 @@ public class VideoContentProvider extends ContentProvider {
     }
 
     private void nextSearch(MatrixCursor cursor, int limit) {
-        List<Video> videos = mService.getNextSearchPage();
+        List<Video> videos = mService.getNextSearch();
 
         Log.d(TAG, "Next search result received: " + videos);
 

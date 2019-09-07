@@ -282,6 +282,7 @@ class SampleClipApi {
         return videos;
     }
 
+    // TODO: channels populated here
     /**
      * Return the desired list of published channels and programs. The app will update the set of
      * published channels and programs to align with this list.
