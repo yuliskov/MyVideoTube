@@ -38,14 +38,16 @@ public class SynchronizeDatabaseJobService extends JobService {
     @TargetApi(23)
     static void schedule(Context context) {
         JobScheduler scheduler = context.getSystemService(JobScheduler.class);
-        scheduler.schedule(new JobInfo.Builder(0,
-                new ComponentName(context, SynchronizeDatabaseJobService.class))
+        scheduler.schedule(
+                new JobInfo.Builder(0, new ComponentName(context, SynchronizeDatabaseJobService.class))
+                .setOverrideDeadline(0)
                 .build());
     }
 
     @Override
     public boolean onStartJob(JobParameters jobParameters) {
         mSynchronizeDatabaseTask = new SynchronizeDatabaseTask(this, jobParameters);
+        // NOTE: fetching channels in background
         mSynchronizeDatabaseTask.execute();
         return true;
     }
@@ -114,14 +116,31 @@ public class SynchronizeDatabaseJobService extends JobService {
         SynchronizeDatabaseTask(Context context, JobParameters jobParameters) {
             mContext = context;
             mJobParameters = jobParameters;
+
             // Get a list of the channels/programs the app wants published.
-            mDesiredPlaylists = SampleClipApi.getDesiredPublishedChannelSet();
+            //mDesiredPlaylists = SampleClipApi.getDesiredPublishedChannelSet();
         }
 
         @Override
         protected Void doInBackground(Void... params) {
-            // Load all channels owned by TvLauncherSample from the database.
+            mDesiredPlaylists = MySampleClipApi.getDesiredPublishedChannelSet();
+
+            if (mDesiredPlaylists == null) {
+                return null;
+            }
+
+            for (Playlist playlist : mDesiredPlaylists) {
+                // NOTE: add chanel
+                SampleTvProvider.addChannel(mContext, playlist);
+            }
+
+            return null;
+        }
+
+        protected Void doInBackgroundOld(Void... params) {
+            // TODO: Load all channels owned by TvLauncherSample from the database.
             loadChannels();
+
             // TODO: sync
             //SampleContentDb sampleContentDb = SampleContentDb.getInstance(mContext);
 
@@ -174,6 +193,7 @@ public class SynchronizeDatabaseJobService extends JobService {
             }
             for (Playlist playlist : wantPlaylistsPublished) {
                 if (!publishedPlaylists.contains(playlist.getPlaylistId())) {
+                    // TODO: add chanel
                     SampleTvProvider.addChannel(mContext, playlist);
                 }
             }
@@ -226,6 +246,7 @@ public class SynchronizeDatabaseJobService extends JobService {
         }
 
         private void loadChannels() {
+            // TODO: Invalid column internal_provider_id
             // Iterate "cursor" through all the channels owned by this app.
             try (Cursor cursor = mContext.getContentResolver().query(TvContractCompat
                             .Channels.CONTENT_URI, SampleTvProvider.CHANNELS_MAP_PROJECTION,

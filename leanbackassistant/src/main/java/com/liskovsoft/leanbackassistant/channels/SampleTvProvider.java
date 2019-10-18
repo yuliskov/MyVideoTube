@@ -238,6 +238,7 @@ public class SampleTvProvider {
                 .setInternalProviderId(playlist.getPlaylistId())
                 .build();
 
+        // TODO: Unknown URL content://android.media.tv/channel
         Uri channelUri = context.getContentResolver().insert(Channels.CONTENT_URI,
                 channel.toContentValues());
         if (channelUri == null || channelUri.equals(Uri.EMPTY)) {
