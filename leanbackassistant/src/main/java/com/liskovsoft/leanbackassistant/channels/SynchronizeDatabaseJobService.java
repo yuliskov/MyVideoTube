@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import androidx.tvprovider.media.tv.TvContractCompat;
 import android.text.TextUtils;
+import com.liskovsoft.sharedutils.mylogger.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ import java.util.Set;
 @TargetApi(21)
 public class SynchronizeDatabaseJobService extends JobService {
     private SynchronizeDatabaseTask mSynchronizeDatabaseTask;
+    private static final String TAG = SynchronizeDatabaseJobService.class.getSimpleName();
 
     @TargetApi(23)
     static void schedule(Context context) {
@@ -124,6 +126,8 @@ public class SynchronizeDatabaseJobService extends JobService {
         @Override
         protected Void doInBackground(Void... params) {
             mDesiredPlaylists = MySampleClipApi.getDesiredPublishedChannelSet();
+
+            Log.d(TAG, "Syncing channels...");
 
             if (mDesiredPlaylists == null) {
                 return null;

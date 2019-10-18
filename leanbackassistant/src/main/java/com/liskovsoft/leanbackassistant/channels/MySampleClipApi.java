@@ -13,6 +13,7 @@ public class MySampleClipApi {
     public static List<Playlist> getDesiredPublishedChannelSet() {
         YouTubeVideoService service = new YouTubeVideoService();
         List<Video> subscriptions = service.getSubscriptions();
+
         List<Playlist> playlists = null;
 
         if (subscriptions != null) {

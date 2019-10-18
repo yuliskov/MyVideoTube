@@ -258,7 +258,7 @@ public class SampleTvProvider {
             final String clipId = clip.getClipId();
             final String contentId = clip.getContentId();
 
-            Uri previewProgramVideoUri;
+            Uri previewProgramVideoUri = null;
             if (clip.isVideoProtected()) {
                 // Create URI for TIF Input Service to be triggered
                 // content://android.media.tv/preview_program/<clipId>
@@ -268,7 +268,7 @@ public class SampleTvProvider {
                         .appendEncodedPath(clipId)
                         .appendQueryParameter("input", TvContractCompat.buildInputId(componentName))
                         .build();
-            } else {
+            } else if (clip.getPreviewVideoUrl() != null) {
                 // Not a protected video, use public https:// URL.
                 previewProgramVideoUri = Uri.parse(clip.getPreviewVideoUrl());
             }
