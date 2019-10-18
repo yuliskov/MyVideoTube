@@ -7,6 +7,8 @@
                  android:supportsRtl="true"
                  android:theme="@style/AppTheme">
 
+        <!--    SEARCH    -->
+
         <activity
             android:name=".search.SearchableActivity"
             android:exported="true">
@@ -27,6 +29,25 @@
                   android:exported="true"
                   tools:ignore="ExportedContentProvider" />
 
+        <!--  END  SEARCH    -->
+
+
+        <!--    CHANNELS    -->
+
+        <activity
+            android:name=".channels.RecommendationReceiverActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data
+                    android:scheme="tvhomescreenchannels"
+                    android:host="com.google.android.tvhomescreenchannels"
+                    android:pathPrefix="/playvideo"
+                />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".channels.SynchronizeDatabaseJobService"
             android:permission="android.permission.BIND_JOB_SERVICE"
@@ -40,6 +61,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </receiver>
+
+        <!--    END CHANNELS    -->
 
     </application>
 

@@ -1,0 +1,4 @@
+<resources>
+    <string name="search_hint">Искать видео</string>
+    <string name="cant_play_video">Не получается проиграть видео</string>
+</resources>

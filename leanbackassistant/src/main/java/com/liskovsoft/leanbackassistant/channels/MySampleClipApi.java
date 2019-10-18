@@ -1,6 +1,7 @@
 package com.liskovsoft.leanbackassistant.channels;
 
 import androidx.tvprovider.media.tv.TvContractCompat;
+import com.liskovsoft.leanbackassistant.channels.SampleClipApi.GetClipByIdListener;
 import com.liskovsoft.myvideotubeapi.Video;
 import com.liskovsoft.youtubeapi.adapters.YouTubeVideoService;
 
@@ -9,17 +10,23 @@ import java.util.List;
 
 public class MySampleClipApi {
     public static final int SUBSCRIPTIONS_ID = 1;
+    private static List<Clip> sCachedVideos;
 
     public static List<Playlist> getDesiredPublishedChannelSet() {
         YouTubeVideoService service = new YouTubeVideoService();
         List<Video> subscriptions = service.getSubscriptions();
 
+        sCachedVideos = new ArrayList<>();
+
         List<Playlist> playlists = null;
 
         if (subscriptions != null) {
             playlists = new ArrayList<>();
+            List<Clip> clips = convertToClips(subscriptions);
             playlists.add(
-                    new Playlist("Subscriptions", convertToClips(subscriptions), Integer.toString(SUBSCRIPTIONS_ID)));
+                    new Playlist("Subscriptions", clips, Integer.toString(SUBSCRIPTIONS_ID)));
+
+            sCachedVideos.addAll(clips);
         }
 
         return playlists;
@@ -48,5 +55,21 @@ public class MySampleClipApi {
         }
 
         return null;
+    }
+
+    public static void getClipById(String clipId, GetClipByIdListener listener) {
+        Clip clip = null;
+
+        if (sCachedVideos != null) {
+            for (Clip v : sCachedVideos) {
+                if (clipId.equals(v.getClipId())) {
+                    //listener.onGetClipById(v);
+                    clip = v;
+                    break;
+                }
+            }
+        }
+
+        listener.onGetClipById(clip);
     }
 }

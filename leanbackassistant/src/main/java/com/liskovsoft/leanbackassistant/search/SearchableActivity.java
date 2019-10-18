@@ -31,12 +31,11 @@ public class SearchableActivity extends Activity {
                 String url = obtainVideoUrl(id);
 
                 if (url != null) {
-                    Intent intent = new Intent();
-                    intent.setAction(Intent.ACTION_VIEW);
-                    intent.setData(Uri.parse(url));
                     AppUtil appUtil = new AppUtil(this);
-                    intent.setClassName(appUtil.getAppPackageName(), appUtil.getBootstrapClassName());
+
+                    Intent intent = appUtil.createVideoIntent(url);
                     Log.d(TAG, "Starting search intent: " + intent);
+
                     startActivity(intent);
                 }
             }

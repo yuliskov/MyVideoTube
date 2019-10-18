@@ -1,6 +1,8 @@
 package com.liskovsoft.leanbackassistant.utils;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import com.liskovsoft.sharedutils.configparser.AssetPropertyParser2;
 import com.liskovsoft.sharedutils.configparser.ConfigParser;
 
@@ -30,5 +32,14 @@ public class AppUtil {
         }
 
         return mParser;
+    }
+
+    public Intent createVideoIntent(String url) {
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        intent.setClassName(getAppPackageName(), getBootstrapClassName());
+
+        return intent;
     }
 }

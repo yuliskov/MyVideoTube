@@ -301,6 +301,11 @@ public class SampleTvProvider {
 
     @WorkerThread
     static void deleteChannel(Context context, long channelId) {
+        if (channelId == -1) {
+            Log.d(TAG, "Invalid channel id " + channelId);
+            return;
+        }
+
         int rowsDeleted = context.getContentResolver().delete(
                 TvContractCompat.buildChannelUri(channelId), null, null);
         if (rowsDeleted < 1) {
@@ -374,6 +379,7 @@ public class SampleTvProvider {
         if (paths.size() == 2 && TextUtils.equals(paths.get(0), PLAY_VIDEO_ACTION_PATH)) {
             return paths.get(1);
         }
+
         return new String();
     }
 

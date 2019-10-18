@@ -13,6 +13,7 @@ import android.os.AsyncTask;
 import androidx.tvprovider.media.tv.TvContractCompat;
 import android.text.TextUtils;
 import com.liskovsoft.sharedutils.mylogger.Log;
+import com.liskovsoft.sharedutils.prefs.GlobalPreferences;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -111,6 +112,7 @@ public class SynchronizeDatabaseJobService extends JobService {
      */
     private class SynchronizeDatabaseTask extends AsyncTask<Void, Void, Void> {
         private final HashMap<Long, ChannelPlaylistId> mChannelPlaylistIds = new HashMap<>();
+        private final GlobalPreferences mPrefs;
         private Context mContext;
         private JobParameters mJobParameters;
         private List<Playlist> mDesiredPlaylists;
@@ -118,6 +120,7 @@ public class SynchronizeDatabaseJobService extends JobService {
         SynchronizeDatabaseTask(Context context, JobParameters jobParameters) {
             mContext = context;
             mJobParameters = jobParameters;
+            mPrefs = GlobalPreferences.instance(mContext);
 
             // Get a list of the channels/programs the app wants published.
             //mDesiredPlaylists = SampleClipApi.getDesiredPublishedChannelSet();
@@ -135,7 +138,9 @@ public class SynchronizeDatabaseJobService extends JobService {
 
             for (Playlist playlist : mDesiredPlaylists) {
                 // NOTE: add chanel
+                SampleTvProvider.deleteChannel(mContext, mPrefs.getSubsChannelId());
                 SampleTvProvider.addChannel(mContext, playlist);
+                mPrefs.setSubsChannelId(playlist.getChannelId());
             }
 
             return null;
