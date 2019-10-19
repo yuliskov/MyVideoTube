@@ -23,6 +23,7 @@ import android.util.Log;
 
 import com.liskovsoft.leanbackassistant.R;
 import com.liskovsoft.leanbackassistant.channels.scheduler.ClipData;
+import com.liskovsoft.leanbackassistant.utils.AppUtil;
 
 import java.util.List;
 
@@ -238,19 +239,25 @@ public class SampleTvProvider {
                 .setInternalProviderId(playlist.getPlaylistId())
                 .build();
 
-        // TODO: Unknown URL content://android.media.tv/channel
         Uri channelUri = context.getContentResolver().insert(Channels.CONTENT_URI,
                 channel.toContentValues());
         if (channelUri == null || channelUri.equals(Uri.EMPTY)) {
             Log.e(TAG, "Insert channel failed");
             return 0;
         }
+
         long channelId = ContentUris.parseId(channelUri);
         playlist.setChannelPublishedId(channelId);
 
         writeChannelLogo(context, channelId, R.drawable.app_icon);
 
-        List<Clip> clips = playlist.getClips();
+        addClipsToChannel(context, channelId, playlist.getClips());
+
+        return channelId;
+    }
+
+    static void addClipsToChannel(Context context, long channelId, List<Clip> clips) {
+        AppUtil appUtil = new AppUtil(context);
 
         int weight = clips.size();
         for (int i = 0; i < clips.size(); ++i, --weight) {
@@ -278,8 +285,9 @@ public class SampleTvProvider {
                     .setTitle(clip.getTitle())
                     .setDescription(clip.getDescription())
                     .setPosterArtUri(Uri.parse(clip.getCardImageUrl()))
-                    .setIntentUri(Uri.parse(SCHEME + "://" + APPS_LAUNCH_HOST
-                            + "/" + PLAY_VIDEO_ACTION_PATH + "/" + clipId))
+                    //.setIntentUri(Uri.parse(SCHEME + "://" + APPS_LAUNCH_HOST
+                    //        + "/" + PLAY_VIDEO_ACTION_PATH + "/" + clipId))
+                    .setIntent(appUtil.createVideoIntent(clip.getVideoUrl()))
                     .setPreviewVideoUri(previewProgramVideoUri)
                     .setInternalProviderId(clipId)
                     .setContentId(contentId)
@@ -296,7 +304,6 @@ public class SampleTvProvider {
                 clip.setProgramId(ContentUris.parseId(programUri));
             }
         }
-        return channelId;
     }
 
     @WorkerThread
@@ -330,14 +337,19 @@ public class SampleTvProvider {
     @WorkerThread
     static void updateProgramClip(Context context, Clip clip) {
         long programId = clip.getProgramId();
+
+        if (programId == -1) {
+            return;
+        }
+
         Uri programUri = TvContractCompat.buildPreviewProgramUri(programId);
         try (Cursor cursor = context.getContentResolver().query(programUri, null, null, null,
                 null)) {
             if (!cursor.moveToFirst()) {
                 Log.e(TAG, "Update program failed");
             }
-            PreviewProgram porgram = PreviewProgram.fromCursor(cursor);
-            PreviewProgram.Builder builder = new PreviewProgram.Builder(porgram)
+            PreviewProgram program = PreviewProgram.fromCursor(cursor);
+            PreviewProgram.Builder builder = new PreviewProgram.Builder(program)
                     .setTitle(clip.getTitle());
 
             int rowsUpdated = context.getContentResolver().update(programUri,

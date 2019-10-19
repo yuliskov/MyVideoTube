@@ -45,7 +45,7 @@ public class Clip implements Parcelable {
     private final boolean mIsVideoProtected;
     private final String mCategory;
     private int mAspectRatio;
-    private long mProgramId;
+    private long mProgramId = -1;
     private int mViewCount;
 
     Clip(String title, String description, String bgImageUrl, String cardImageUrl,

@@ -18,10 +18,7 @@ import com.liskovsoft.sharedutils.prefs.GlobalPreferences;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * JobScheduler task to synchronize the TV provider database with the desired list of channels and
@@ -115,7 +112,7 @@ public class SynchronizeDatabaseJobService extends JobService {
         private final GlobalPreferences mPrefs;
         private Context mContext;
         private JobParameters mJobParameters;
-        private List<Playlist> mDesiredPlaylists;
+        private Playlist mSubscriptions;
 
         SynchronizeDatabaseTask(Context context, JobParameters jobParameters) {
             mContext = context;
@@ -128,125 +125,127 @@ public class SynchronizeDatabaseJobService extends JobService {
 
         @Override
         protected Void doInBackground(Void... params) {
-            mDesiredPlaylists = MySampleClipApi.getDesiredPublishedChannelSet();
+            mSubscriptions = MySampleClipApi.getSubscriptionsPlaylist();
 
             Log.d(TAG, "Syncing channels...");
 
-            if (mDesiredPlaylists == null) {
-                return null;
-            }
-
-            for (Playlist playlist : mDesiredPlaylists) {
-                // NOTE: add chanel
-                SampleTvProvider.deleteChannel(mContext, mPrefs.getSubsChannelId());
-                SampleTvProvider.addChannel(mContext, playlist);
-                mPrefs.setSubsChannelId(playlist.getChannelId());
+            if (mSubscriptions != null) {
+                if (mPrefs.getSubsChannelId() == -1) {
+                    // NOTE: add chanel
+                    Log.d(TAG, "Add channel: Subscriptions");
+                    long channelId = SampleTvProvider.addChannel(mContext, mSubscriptions);
+                    mPrefs.setSubsChannelId(channelId);
+                } else {
+                    // NOTE: update channel
+                    Log.d(TAG, "Updating subscriptions...");
+                    //SampleTvProvider.addClipsToChannel(mContext, mPrefs.getSubsChannelId(), mSubscriptions.getClips());
+                }
             }
 
             return null;
         }
 
-        protected Void doInBackgroundOld(Void... params) {
-            // TODO: Load all channels owned by TvLauncherSample from the database.
-            loadChannels();
-
-            // TODO: sync
-            //SampleContentDb sampleContentDb = SampleContentDb.getInstance(mContext);
-
-            // Generate a list of playlists this app wants published. This is "mDesiredPlaylists"
-            // (from server) minus those playlists the user has deleted.
-            final List<Playlist> wantPlaylistsPublished = new ArrayList<>();
-            for (Playlist wantPublished : mDesiredPlaylists) {
-                // Want this playlist published.
-                wantPlaylistsPublished.add(wantPublished);
-            }
-
-            // Generate a list of playlists this app wants un-published. This is any published
-            // playlists (from "mChannelPlaylistIds") that are not in (server hosted data set (from
-            // "serverPlaylists") less those playlists deleted by the user).
-            List<Playlist> serverPlaylists = SampleClipApi.getPlaylistBlocking();
-            final HashSet<String> serverPlaylistIds = new LinkedHashSet<>();
-            for (Playlist serverPlaylist : serverPlaylists) {
-                serverPlaylistIds.add(serverPlaylist.getPlaylistId());
-            }
-            final List<Long> wantChannelsUnpublished = new ArrayList<>();
-
-            for (Map.Entry<Long, ChannelPlaylistId> entry : mChannelPlaylistIds.entrySet()) {
-                ChannelPlaylistId publishedPlaylist = entry.getValue();
-                if (!serverPlaylistIds.contains(publishedPlaylist.mPlaylistId)) {
-                    wantChannelsUnpublished.add(publishedPlaylist.mChannelId);
-                }
-            }
-
-            // Unpublish the channels in "wantChannelsUnpublished" and remove them from
-            // "mChannelPlaylistIds".
-            for (Long channelIdToUnpublish : wantChannelsUnpublished) {
-                SampleTvProvider.deleteChannel(mContext, channelIdToUnpublish);
-                mChannelPlaylistIds.remove(channelIdToUnpublish);
-            }
-
-            Set<Map.Entry<Long, ChannelPlaylistId>> channelPlayListIdsSet =
-                    mChannelPlaylistIds.entrySet();
-
-            // Load published programs from still-published channels.
-            for (Map.Entry<Long, ChannelPlaylistId> entry : channelPlayListIdsSet) {
-                ChannelPlaylistId channelPlaylistId = entry.getValue();
-                loadProgramsForChannel(channelPlaylistId);
-            }
-
-            // Publish the playlists in "wantPlaylistsPublished" that are not already published.
-            final HashSet<String> publishedPlaylists = new HashSet<>();
-            for (Map.Entry<Long, ChannelPlaylistId> entry : channelPlayListIdsSet) {
-                ChannelPlaylistId channelPlaylistId = entry.getValue();
-                publishedPlaylists.add(channelPlaylistId.mPlaylistId);
-            }
-            for (Playlist playlist : wantPlaylistsPublished) {
-                if (!publishedPlaylists.contains(playlist.getPlaylistId())) {
-                    // TODO: add chanel
-                    SampleTvProvider.addChannel(mContext, playlist);
-                }
-            }
-
-            // Synchronize the clips remaining in "mChannelPlaylistIds" by adding clips not present,
-            // deleting clips that aren't in "SampleClipApi" database and updating any that differ.
-            for (Map.Entry<Long, ChannelPlaylistId> entry : channelPlayListIdsSet) {
-                ChannelPlaylistId channelPlaylistId = entry.getValue();
-                Playlist serverPlaylist =
-                        SampleClipApi.getPlaylistById(channelPlaylistId.mPlaylistId);
-                final HashMap<Long, Clip> wantClipsPublished = new HashMap<>();
-                // TODO: sync
-                //for (Clip serverClip : serverPlaylist.getClips()) {
-                //    if (!sampleContentDb.isClipRemoved(serverClip.getClipId())) {
-                //        wantClipsPublished.put(serverClip.getProgramId(), serverClip);
-                //    }
-                //}
-                final HashSet<Long> wantProgramsUnpublished = new HashSet<>();
-                for (ProgramClip publishedClip : channelPlaylistId.mProgramClipId) {
-                    wantClipsPublished.remove(publishedClip.programId);
-                    wantProgramsUnpublished.add(publishedClip.programId);
-                }
-                // TODO: sync
-                //for (Clip serverClip : serverPlaylist.getClips()) {
-                //    if (!sampleContentDb.isClipRemoved(serverClip.getClipId())) {
-                //        wantProgramsUnpublished.remove(serverClip.getProgramId());
-                //    }
-                //}
-                final List<Clip> wantClipsProgramsUpdate = new ArrayList<>();
-                for (ProgramClip publishedClip : channelPlaylistId.mProgramClipId) {
-                    if (!wantProgramsUnpublished.contains(publishedClip.programId)) {
-                        Clip clip = SampleClipApi.getClipByIdBlocking(publishedClip.clipId);
-                        if (!TextUtils.equals(publishedClip.programTitle, clip.getTitle())) {
-                            wantClipsProgramsUpdate.add(clip);
-                        }
-                    }
-                }
-                unpublishPrograms(wantProgramsUnpublished);
-                updateProgramsClips(wantClipsProgramsUpdate);
-                publishClips(wantClipsPublished, channelPlaylistId.mChannelId,
-                        channelPlaylistId.mProgramClipId.size());
-            }
-            return null;
-        }
+        //protected Void doInBackgroundOld(Void... params) {
+        //    // TODO: Load all channels owned by TvLauncherSample from the database.
+        //    loadChannels();
+        //
+        //    // TODO: sync
+        //    //SampleContentDb sampleContentDb = SampleContentDb.getInstance(mContext);
+        //
+        //    // Generate a list of playlists this app wants published. This is "mDesiredPlaylists"
+        //    // (from server) minus those playlists the user has deleted.
+        //    final List<Playlist> wantPlaylistsPublished = new ArrayList<>();
+        //    for (Playlist wantPublished : mSubscriptions) {
+        //        // Want this playlist published.
+        //        wantPlaylistsPublished.add(wantPublished);
+        //    }
+        //
+        //    // Generate a list of playlists this app wants un-published. This is any published
+        //    // playlists (from "mChannelPlaylistIds") that are not in (server hosted data set (from
+        //    // "serverPlaylists") less those playlists deleted by the user).
+        //    List<Playlist> serverPlaylists = SampleClipApi.getPlaylistBlocking();
+        //    final HashSet<String> serverPlaylistIds = new LinkedHashSet<>();
+        //    for (Playlist serverPlaylist : serverPlaylists) {
+        //        serverPlaylistIds.add(serverPlaylist.getPlaylistId());
+        //    }
+        //    final List<Long> wantChannelsUnpublished = new ArrayList<>();
+        //
+        //    for (Map.Entry<Long, ChannelPlaylistId> entry : mChannelPlaylistIds.entrySet()) {
+        //        ChannelPlaylistId publishedPlaylist = entry.getValue();
+        //        if (!serverPlaylistIds.contains(publishedPlaylist.mPlaylistId)) {
+        //            wantChannelsUnpublished.add(publishedPlaylist.mChannelId);
+        //        }
+        //    }
+        //
+        //    // Unpublish the channels in "wantChannelsUnpublished" and remove them from
+        //    // "mChannelPlaylistIds".
+        //    for (Long channelIdToUnpublish : wantChannelsUnpublished) {
+        //        SampleTvProvider.deleteChannel(mContext, channelIdToUnpublish);
+        //        mChannelPlaylistIds.remove(channelIdToUnpublish);
+        //    }
+        //
+        //    Set<Map.Entry<Long, ChannelPlaylistId>> channelPlayListIdsSet =
+        //            mChannelPlaylistIds.entrySet();
+        //
+        //    // Load published programs from still-published channels.
+        //    for (Map.Entry<Long, ChannelPlaylistId> entry : channelPlayListIdsSet) {
+        //        ChannelPlaylistId channelPlaylistId = entry.getValue();
+        //        loadProgramsForChannel(channelPlaylistId);
+        //    }
+        //
+        //    // Publish the playlists in "wantPlaylistsPublished" that are not already published.
+        //    final HashSet<String> publishedPlaylists = new HashSet<>();
+        //    for (Map.Entry<Long, ChannelPlaylistId> entry : channelPlayListIdsSet) {
+        //        ChannelPlaylistId channelPlaylistId = entry.getValue();
+        //        publishedPlaylists.add(channelPlaylistId.mPlaylistId);
+        //    }
+        //    for (Playlist playlist : wantPlaylistsPublished) {
+        //        if (!publishedPlaylists.contains(playlist.getPlaylistId())) {
+        //            // TODO: add chanel
+        //            SampleTvProvider.addChannel(mContext, playlist);
+        //        }
+        //    }
+        //
+        //    // Synchronize the clips remaining in "mChannelPlaylistIds" by adding clips not present,
+        //    // deleting clips that aren't in "SampleClipApi" database and updating any that differ.
+        //    for (Map.Entry<Long, ChannelPlaylistId> entry : channelPlayListIdsSet) {
+        //        ChannelPlaylistId channelPlaylistId = entry.getValue();
+        //        Playlist serverPlaylist =
+        //                SampleClipApi.getPlaylistById(channelPlaylistId.mPlaylistId);
+        //        final HashMap<Long, Clip> wantClipsPublished = new HashMap<>();
+        //        // TODO: sync
+        //        //for (Clip serverClip : serverPlaylist.getClips()) {
+        //        //    if (!sampleContentDb.isClipRemoved(serverClip.getClipId())) {
+        //        //        wantClipsPublished.put(serverClip.getProgramId(), serverClip);
+        //        //    }
+        //        //}
+        //        final HashSet<Long> wantProgramsUnpublished = new HashSet<>();
+        //        for (ProgramClip publishedClip : channelPlaylistId.mProgramClipId) {
+        //            wantClipsPublished.remove(publishedClip.programId);
+        //            wantProgramsUnpublished.add(publishedClip.programId);
+        //        }
+        //        // TODO: sync
+        //        //for (Clip serverClip : serverPlaylist.getClips()) {
+        //        //    if (!sampleContentDb.isClipRemoved(serverClip.getClipId())) {
+        //        //        wantProgramsUnpublished.remove(serverClip.getProgramId());
+        //        //    }
+        //        //}
+        //        final List<Clip> wantClipsProgramsUpdate = new ArrayList<>();
+        //        for (ProgramClip publishedClip : channelPlaylistId.mProgramClipId) {
+        //            if (!wantProgramsUnpublished.contains(publishedClip.programId)) {
+        //                Clip clip = SampleClipApi.getClipByIdBlocking(publishedClip.clipId);
+        //                if (!TextUtils.equals(publishedClip.programTitle, clip.getTitle())) {
+        //                    wantClipsProgramsUpdate.add(clip);
+        //                }
+        //            }
+        //        }
+        //        unpublishPrograms(wantProgramsUnpublished);
+        //        updateProgramsClips(wantClipsProgramsUpdate);
+        //        publishClips(wantClipsPublished, channelPlaylistId.mChannelId,
+        //                channelPlaylistId.mProgramClipId.size());
+        //    }
+        //    return null;
+        //}
 
         @Override
         protected void onPostExecute(Void result) {

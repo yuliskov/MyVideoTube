@@ -12,24 +12,22 @@ public class MySampleClipApi {
     public static final int SUBSCRIPTIONS_ID = 1;
     private static List<Clip> sCachedVideos;
 
-    public static List<Playlist> getDesiredPublishedChannelSet() {
+    public static Playlist getSubscriptionsPlaylist() {
         YouTubeVideoService service = new YouTubeVideoService();
         List<Video> subscriptions = service.getSubscriptions();
 
         sCachedVideos = new ArrayList<>();
 
-        List<Playlist> playlists = null;
+        Playlist playlist = null;
 
         if (subscriptions != null) {
-            playlists = new ArrayList<>();
             List<Clip> clips = convertToClips(subscriptions);
-            playlists.add(
-                    new Playlist("Subscriptions", clips, Integer.toString(SUBSCRIPTIONS_ID)));
+            playlist = new Playlist("Subscriptions", clips, Integer.toString(SUBSCRIPTIONS_ID));
 
             sCachedVideos.addAll(clips);
         }
 
-        return playlists;
+        return playlist;
     }
 
     private static List<Clip> convertToClips(List<Video> videos) {

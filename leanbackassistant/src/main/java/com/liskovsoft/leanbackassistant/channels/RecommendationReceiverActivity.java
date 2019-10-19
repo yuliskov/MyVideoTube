@@ -37,7 +37,6 @@ public class RecommendationReceiverActivity extends Activity implements SampleCl
         }
 
         finish();
-        System.exit(0);
     }
 
     @Override
