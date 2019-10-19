@@ -14,6 +14,7 @@
 
 package com.liskovsoft.leanbackassistant.channels;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class Playlist {
@@ -26,6 +27,7 @@ public final class Playlist {
     private List<Clip> mClips;
     private boolean mChannelPublished;
     private long mChannelId;
+    private static final String DELIM = ",";
 
     Playlist(String name, List<Clip> clip, String playlistId) {
         mName = name;
@@ -75,5 +77,39 @@ public final class Playlist {
                 + "' mVideoUri = '" + mVideoUri + "' mBgImage = '" + mBgImage + "' mTitle = '"
                 + mTitle + "' mList = '" + mClips + "' mId = '" + mPlaylistId
                 + "' mChannelPublished" + mChannelPublished + "'";
+    }
+
+    public String getClipsIds() {
+        StringBuilder result = new StringBuilder();
+
+        if (mClips != null) {
+            for (Clip c : mClips) {
+                long programId = c.getProgramId();
+
+                if (result.length() == 0) {
+                    result.append(programId);
+                } else {
+                    result.append(DELIM);
+                    result.append(programId);
+                }
+
+            }
+        }
+
+        return result.toString();
+    }
+
+    public static List<Long> parseClipIds(String clipsIds) {
+        List<Long> result = new ArrayList<>();
+
+        if (clipsIds != null) {
+            String[] split = clipsIds.split(DELIM);
+
+            for (String id : split) {
+                result.add(Long.parseLong(id));
+            }
+        }
+
+        return result;
     }
 }
