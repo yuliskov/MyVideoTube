@@ -260,10 +260,6 @@ public class SampleTvProvider {
         for (int i = 0; i < clips.size(); ++i, --weight) {
             Clip clip = clips.get(i);
 
-            if (clip.getProgramId() != -1) { // add clips that aren't published yet
-                break;
-            }
-
             publishProgram(context, clip, channelId, weight);
         }
     }

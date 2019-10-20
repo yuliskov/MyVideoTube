@@ -141,13 +141,15 @@ public class SynchronizeDatabaseJobService extends JobService {
                         Log.d(TAG, "Add channel: " + playlist.getName());
                         SampleTvProvider.addChannel(mContext, playlist);
                         setChannelId(channelKey, playlist.getChannelId());
-                        setProgramsIds(programsKey, playlist.getClipsIds());
+                        setProgramsIds(programsKey, playlist.getPublishedClipsIds());
                     } else {
                         Log.d(TAG, "Updating " + playlist.getName() + "...");
                         playlist.setChannelPublishedId(getChannelId(channelKey));
                         playlist.restoreClipsIds(getProgramsIds(programsKey));
-                        updateProgramsClips(playlist.getClips()); // update clips
+                        updateProgramsClips(playlist.getClips()); // update clips that have program_id
                         SampleTvProvider.addClipsToChannel(mContext, playlist.getChannelId(), playlist.getClips()); // add more clips
+                        // all clips now published
+                        setProgramsIds(programsKey, playlist.getPublishedClipsIds());
                     }
                 }
             }

@@ -81,12 +81,16 @@ public final class Playlist {
                 + "' mChannelPublished" + mChannelPublished + "'";
     }
 
-    public String getClipsIds() {
+    public String getPublishedClipsIds() {
         StringBuilder result = new StringBuilder();
 
         if (mClips != null) {
             for (Clip c : mClips) {
                 long programId = c.getProgramId();
+
+                if (programId == -1) { // not published
+                    continue;
+                }
 
                 if (result.length() == 0) {
                     result.append(programId);
