@@ -31,9 +31,7 @@ public class SearchableActivity extends Activity {
                 String url = obtainVideoUrl(id);
 
                 if (url != null) {
-                    AppUtil appUtil = new AppUtil(this);
-
-                    Intent intent = appUtil.createVideoIntent(url);
+                    Intent intent = AppUtil.getInstance(this).createVideoIntent(url);
                     Log.d(TAG, "Starting search intent: " + intent);
 
                     startActivity(intent);

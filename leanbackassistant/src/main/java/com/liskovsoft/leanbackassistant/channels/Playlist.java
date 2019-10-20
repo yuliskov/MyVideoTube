@@ -28,6 +28,8 @@ public final class Playlist {
     private boolean mChannelPublished;
     private long mChannelId;
     private static final String DELIM = ",";
+    private String mChannelKey;
+    private String mProgramsKey;
 
     Playlist(String name, List<Clip> clip, String playlistId) {
         mName = name;
@@ -123,5 +125,21 @@ public final class Playlist {
                 }
             }
         }
+    }
+
+    public void setChannelKey(String key) {
+        mChannelKey = key;
+    }
+
+    public String getChannelKey() {
+        return mChannelKey;
+    }
+
+    public void setProgramsKey(String key) {
+        mProgramsKey = key;
+    }
+
+    public String getProgramsKey() {
+        return mProgramsKey;
     }
 }

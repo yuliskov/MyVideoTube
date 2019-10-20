@@ -11,11 +11,11 @@ public class AppUtil {
     private ConfigParser mParser;
     private static AppUtil sInstance;
 
-    public AppUtil(Context context) {
+    private AppUtil(Context context) {
         mContext = context;
     }
 
-    public static AppUtil getInstanse(Context context) {
+    public static AppUtil getInstance(Context context) {
         if (sInstance == null) {
             sInstance = new AppUtil(context);
         }

@@ -5,4 +5,7 @@
     <string name="search_label">SmartYouTubeTV</string>
     <string name="settings_description">SmartYouTubeTV Videos</string>
     <string name="cant_play_video">Can\'t play this video</string>
+    <string name="subscriptions_playlist_name">Subscriptions</string>
+    <string name="history_playlist_name">View History</string>
+    <string name="recommended_playlist_name">Recommended</string>
 </resources>

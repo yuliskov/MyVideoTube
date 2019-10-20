@@ -16,7 +16,6 @@ import androidx.tvprovider.media.tv.ChannelLogoUtils;
 import androidx.tvprovider.media.tv.PreviewProgram;
 import androidx.tvprovider.media.tv.TvContractCompat;
 import androidx.tvprovider.media.tv.TvContractCompat.Channels;
-import androidx.tvprovider.media.tv.TvContractCompat.PreviewPrograms;
 import androidx.tvprovider.media.tv.WatchNextProgram;
 import android.text.TextUtils;
 
@@ -28,6 +27,7 @@ import com.liskovsoft.sharedutils.mylogger.Log;
 import java.util.List;
 
 public class SampleTvProvider {
+    private static final String TAG = SampleTvProvider.class.getSimpleName();
     /**
      * Indices into "CHANNELS_MAP_PROJECTION" and if that changes, these should too.
      */
@@ -50,7 +50,6 @@ public class SampleTvProvider {
                     TvContractCompat.PreviewPrograms.COLUMN_TITLE,
                     TvContractCompat.PreviewProgramColumns.COLUMN_INTERACTION_TYPE,
                     TvContractCompat.PreviewProgramColumns.COLUMN_INTERACTION_COUNT};
-    private static final String TAG = "SampleTvProvider";
     private static final String SCHEME = "tvhomescreenchannels";
     private static final String APPS_LAUNCH_HOST = "com.google.android.tvhomescreenchannels";
     private static final String PLAY_VIDEO_ACTION_PATH = "playvideo";
@@ -257,59 +256,15 @@ public class SampleTvProvider {
     }
 
     static void addClipsToChannel(Context context, long channelId, List<Clip> clips) {
-        AppUtil appUtil = new AppUtil(context);
-
         int weight = clips.size();
         for (int i = 0; i < clips.size(); ++i, --weight) {
             Clip clip = clips.get(i);
-            final String clipId = clip.getClipId();
-            final String contentId = clip.getContentId();
 
-            Uri previewProgramVideoUri = null;
-            if (clip.isVideoProtected()) {
-                // Create URI for TIF Input Service to be triggered
-                // content://android.media.tv/preview_program/<clipId>
-                ComponentName componentName = new ComponentName(context,
-                        PreviewVideoInputService.class);
-                previewProgramVideoUri = PreviewPrograms.CONTENT_URI.buildUpon()
-                        .appendEncodedPath(clipId)
-                        .appendQueryParameter("input", TvContractCompat.buildInputId(componentName))
-                        .build();
-            } else if (clip.getPreviewVideoUrl() != null) {
-                // Not a protected video, use public https:// URL.
-                previewProgramVideoUri = Uri.parse(clip.getPreviewVideoUrl());
+            if (clip.getProgramId() != -1) { // add clips that aren't published yet
+                break;
             }
 
-            PreviewProgram program = new PreviewProgram.Builder()
-                    .setChannelId(channelId)
-                    .setTitle(clip.getTitle())
-                    .setDescription(clip.getDescription())
-                    .setPosterArtUri(Uri.parse(clip.getCardImageUrl()))
-                    //.setIntentUri(Uri.parse(SCHEME + "://" + APPS_LAUNCH_HOST
-                    //        + "/" + PLAY_VIDEO_ACTION_PATH + "/" + clipId))
-                    .setIntent(appUtil.createVideoIntent(clip.getVideoUrl()))
-                    .setPreviewVideoUri(previewProgramVideoUri)
-                    .setInternalProviderId(clipId)
-                    .setContentId(contentId)
-                    .setWeight(weight)
-                    .setPosterArtAspectRatio(clip.getAspectRatio())
-                    .setType(TvContractCompat.PreviewPrograms.TYPE_MOVIE)
-                    .build();
-
-            Uri programUri = null;
-
-            try {
-                programUri = context.getContentResolver().insert(PREVIEW_PROGRAMS_CONTENT_URI, program.toContentValues());
-            } catch (Exception e) {
-                Log.e(TAG, e.getMessage());
-                e.printStackTrace();
-            }
-
-            if (programUri == null || programUri.equals(Uri.EMPTY)) {
-                Log.e(TAG, "Insert program failed");
-            } else {
-                clip.setProgramId(ContentUris.parseId(programUri));
-            }
+            publishProgram(context, clip, channelId, weight);
         }
     }
 
@@ -342,16 +297,43 @@ public class SampleTvProvider {
     }
 
     @WorkerThread
-    static void updateProgramClip(Context context, Clip clip) {
+    static void updateProgramClipSimple(Context context, Clip clip) {
         long programId = clip.getProgramId();
 
         if (programId == -1) {
+            Log.e(TAG, "Oops. Clip not published yet. Exiting...");
             return;
         }
 
         Uri programUri = TvContractCompat.buildPreviewProgramUri(programId);
-        try (Cursor cursor = context.getContentResolver().query(programUri, null, null, null,
-                null)) {
+
+        Log.d(TAG, "Updating clip " + programUri);
+
+        PreviewProgram.Builder builder = createProgramBuilder(context, clip);
+
+        int rowsUpdated = context.getContentResolver().update(programUri, builder.build().toContentValues(), null, null);
+
+        if (rowsUpdated < 1) {
+            Log.e(TAG, "Update program failed");
+        } else {
+            Log.d(TAG, "Program clip updated " + clip.getTitle());
+        }
+    }
+
+    @WorkerThread
+    static void updateProgramClip(Context context, Clip clip) {
+        long programId = clip.getProgramId();
+
+        if (programId == -1) {
+            Log.e(TAG, "Oops. Clip not published yet. Exiting...");
+            return;
+        }
+
+        Uri programUri = TvContractCompat.buildPreviewProgramUri(programId);
+
+        Log.d(TAG, "Updating clip " + programUri);
+
+        try (Cursor cursor = context.getContentResolver().query(programUri, null, null, null, null)) {
 
             int rowsUpdated = 0;
 
@@ -361,53 +343,48 @@ public class SampleTvProvider {
                 }
 
                 PreviewProgram program = PreviewProgram.fromCursor(cursor);
-                PreviewProgram.Builder builder = new PreviewProgram.Builder(program)
-                        .setTitle(clip.getTitle())
-                        .setDescription(clip.getDescription())
-                        .setPosterArtUri(Uri.parse(clip.getCardImageUrl()))
-                        .setIntent(AppUtil.getInstanse(context).createVideoIntent(clip.getVideoUrl()))
-                        .setPreviewVideoUri(Uri.parse(clip.getPreviewVideoUrl()))
-                        .setInternalProviderId(clip.getClipId())
-                        .setContentId(clip.getContentId())
-                        .setPosterArtAspectRatio(clip.getAspectRatio())
-                        .setType(TvContractCompat.PreviewPrograms.TYPE_MOVIE)
 
-                        .setTitle(clip.getTitle());
+                PreviewProgram.Builder builder = createProgramBuilder(new PreviewProgram.Builder(program), context, clip);
 
-
-                rowsUpdated = context.getContentResolver().update(programUri,
-                        builder.build().toContentValues(), null, null);
+                rowsUpdated = context.getContentResolver().update(programUri, builder.build().toContentValues(), null, null);
             }
 
             if (rowsUpdated < 1) {
                 Log.e(TAG, "Update program failed");
+            } else {
+                Log.d(TAG, "Program clip updated " + clip.getTitle());
             }
+        } catch (Exception ex) {
+            Log.e(TAG, ex.getMessage());
+            ex.printStackTrace();
         }
     }
 
     static void publishProgram(Context context, Clip clip, long channelId, int weight) {
-        final String clipId = clip.getClipId();
+        if (clip.getProgramId() != -1) {
+            Log.e(TAG, "Clip already published. Exiting...");
+            return;
+        }
 
-        PreviewProgram program = new PreviewProgram.Builder()
-                .setChannelId(channelId)
-                .setTitle(clip.getTitle())
-                .setDescription(clip.getDescription())
-                .setPosterArtUri(Uri.parse(clip.getCardImageUrl()))
-                .setIntentUri(Uri.parse(SCHEME + "://" + APPS_LAUNCH_HOST
-                        + "/" + PLAY_VIDEO_ACTION_PATH + "/" + clipId))
-                .setPreviewVideoUri(Uri.parse(clip.getPreviewVideoUrl()))
-                .setInternalProviderId(clipId)
-                .setWeight(weight)
-                .setPosterArtAspectRatio(clip.getAspectRatio())
-                .setType(TvContractCompat.PreviewPrograms.TYPE_MOVIE)
-                .build();
+        PreviewProgram.Builder builder =
+                createProgramBuilder(context, clip)
+                        .setWeight(weight)
+                        .setChannelId(channelId);
 
-        Uri programUri = context.getContentResolver().insert(PREVIEW_PROGRAMS_CONTENT_URI,
-                program.toContentValues());
+        Uri programUri = null;
+
+        try {
+            programUri = context.getContentResolver().insert(PREVIEW_PROGRAMS_CONTENT_URI, builder.build().toContentValues());
+        } catch (Exception e) {
+            Log.e(TAG, e.getMessage());
+            e.printStackTrace();
+        }
+
         if (programUri == null || programUri.equals(Uri.EMPTY)) {
             Log.e(TAG, "Insert program failed");
             return;
         }
+
         clip.setProgramId(ContentUris.parseId(programUri));
     }
 
@@ -440,5 +417,27 @@ public class SampleTvProvider {
                 Log.e(TAG, "Update program failed");
             }
         }
+    }
+
+    private static PreviewProgram.Builder createProgramBuilder(Context context, Clip clip) {
+        return createProgramBuilder(new PreviewProgram.Builder(), context, clip);
+    }
+
+    private static PreviewProgram.Builder createProgramBuilder(PreviewProgram.Builder baseBuilder, Context context, Clip clip) {
+        Uri previewUri = clip.getPreviewVideoUrl() == null ? null : Uri.parse(clip.getPreviewVideoUrl());
+        Uri cardUri = clip.getCardImageUrl() == null ? null : Uri.parse(clip.getCardImageUrl());
+
+        baseBuilder
+            .setTitle(clip.getTitle())
+            .setDescription(clip.getDescription())
+            .setPosterArtUri(cardUri)
+            .setIntent(AppUtil.getInstance(context).createVideoIntent(clip.getVideoUrl()))
+            .setPreviewVideoUri(previewUri)
+            .setInternalProviderId(clip.getClipId())
+            .setContentId(clip.getContentId())
+            .setPosterArtAspectRatio(clip.getAspectRatio())
+            .setType(TvContractCompat.PreviewPrograms.TYPE_MOVIE);
+
+        return baseBuilder;
     }
 }
