@@ -352,15 +352,33 @@ public class SampleTvProvider {
         Uri programUri = TvContractCompat.buildPreviewProgramUri(programId);
         try (Cursor cursor = context.getContentResolver().query(programUri, null, null, null,
                 null)) {
-            if (!cursor.moveToFirst()) {
-                Log.e(TAG, "Update program failed");
-            }
-            PreviewProgram program = PreviewProgram.fromCursor(cursor);
-            PreviewProgram.Builder builder = new PreviewProgram.Builder(program)
-                    .setTitle(clip.getTitle());
 
-            int rowsUpdated = context.getContentResolver().update(programUri,
-                    builder.build().toContentValues(), null, null);
+            int rowsUpdated = 0;
+
+            if (cursor != null) {
+                if (!cursor.moveToFirst()) {
+                    Log.e(TAG, "Update program failed");
+                }
+
+                PreviewProgram program = PreviewProgram.fromCursor(cursor);
+                PreviewProgram.Builder builder = new PreviewProgram.Builder(program)
+                        .setTitle(clip.getTitle())
+                        .setDescription(clip.getDescription())
+                        .setPosterArtUri(Uri.parse(clip.getCardImageUrl()))
+                        .setIntent(AppUtil.getInstanse(context).createVideoIntent(clip.getVideoUrl()))
+                        .setPreviewVideoUri(Uri.parse(clip.getPreviewVideoUrl()))
+                        .setInternalProviderId(clip.getClipId())
+                        .setContentId(clip.getContentId())
+                        .setPosterArtAspectRatio(clip.getAspectRatio())
+                        .setType(TvContractCompat.PreviewPrograms.TYPE_MOVIE)
+
+                        .setTitle(clip.getTitle());
+
+
+                rowsUpdated = context.getContentResolver().update(programUri,
+                        builder.build().toContentValues(), null, null);
+            }
+
             if (rowsUpdated < 1) {
                 Log.e(TAG, "Update program failed");
             }

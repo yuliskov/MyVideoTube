@@ -9,9 +9,18 @@ import com.liskovsoft.sharedutils.configparser.ConfigParser;
 public class AppUtil {
     private final Context mContext;
     private ConfigParser mParser;
+    private static AppUtil sInstance;
 
     public AppUtil(Context context) {
         mContext = context;
+    }
+
+    public static AppUtil getInstanse(Context context) {
+        if (sInstance == null) {
+            sInstance = new AppUtil(context);
+        }
+
+        return sInstance;
     }
 
     public String getBootstrapClassName() {
