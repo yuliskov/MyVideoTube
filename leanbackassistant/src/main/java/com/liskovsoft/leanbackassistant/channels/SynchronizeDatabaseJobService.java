@@ -139,7 +139,9 @@ public class SynchronizeDatabaseJobService extends JobService {
                 } else {
                     // NOTE: update channel
                     Log.d(TAG, "Updating subscriptions...");
-                    //SampleTvProvider.addClipsToChannel(mContext, mPrefs.getSubsChannelId(), mSubscriptions.getClips());
+                    mSubscriptions.setChannelPublishedId(mPrefs.getSubsChannelId());
+                    mSubscriptions.restoreClipsIds(mPrefs.getSubsClipsIds());
+                    updateProgramsClips(mSubscriptions.getClips());
                 }
             }
 

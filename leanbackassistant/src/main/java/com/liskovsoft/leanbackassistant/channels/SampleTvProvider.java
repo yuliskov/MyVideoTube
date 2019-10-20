@@ -19,11 +19,11 @@ import androidx.tvprovider.media.tv.TvContractCompat.Channels;
 import androidx.tvprovider.media.tv.TvContractCompat.PreviewPrograms;
 import androidx.tvprovider.media.tv.WatchNextProgram;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.liskovsoft.leanbackassistant.R;
 import com.liskovsoft.leanbackassistant.channels.scheduler.ClipData;
 import com.liskovsoft.leanbackassistant.utils.AppUtil;
+import com.liskovsoft.sharedutils.mylogger.Log;
 
 import java.util.List;
 
@@ -296,8 +296,15 @@ public class SampleTvProvider {
                     .setType(TvContractCompat.PreviewPrograms.TYPE_MOVIE)
                     .build();
 
-            Uri programUri = context.getContentResolver().insert(PREVIEW_PROGRAMS_CONTENT_URI,
-                    program.toContentValues());
+            Uri programUri = null;
+
+            try {
+                programUri = context.getContentResolver().insert(PREVIEW_PROGRAMS_CONTENT_URI, program.toContentValues());
+            } catch (Exception e) {
+                Log.e(TAG, e.getMessage());
+                e.printStackTrace();
+            }
+
             if (programUri == null || programUri.equals(Uri.EMPTY)) {
                 Log.e(TAG, "Insert program failed");
             } else {

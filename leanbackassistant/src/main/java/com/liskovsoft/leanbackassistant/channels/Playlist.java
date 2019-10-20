@@ -99,7 +99,7 @@ public final class Playlist {
         return result.toString();
     }
 
-    public static List<Long> parseClipIds(String clipsIds) {
+    private static List<Long> parseClipIds(String clipsIds) {
         List<Long> result = new ArrayList<>();
 
         if (clipsIds != null) {
@@ -111,5 +111,17 @@ public final class Playlist {
         }
 
         return result;
+    }
+
+    public void restoreClipsIds(String clipsIds) {
+        if (clipsIds != null && mClips != null) {
+            List<Long> ids = parseClipIds(clipsIds);
+            for (int i = 0; i < ids.size(); i++) {
+                if (mClips.size() > i) { // avoid index of bound exception
+                    Clip clip = mClips.get(i);
+                    clip.setProgramId(ids.get(i));
+                }
+            }
+        }
     }
 }

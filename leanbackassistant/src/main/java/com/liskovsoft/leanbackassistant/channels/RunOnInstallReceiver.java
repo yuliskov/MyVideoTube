@@ -24,7 +24,7 @@ public class RunOnInstallReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "Synchronizing database");
 
-        if (Helpers.isAndroidTV(context)) {
+        if (Helpers.isAndroidTVLauncher(context)) {
             SynchronizeDatabaseJobService.schedule(context);
         }
     }
