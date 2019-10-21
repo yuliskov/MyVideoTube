@@ -30,6 +30,7 @@ public final class Playlist {
     private static final String DELIM = ",";
     private String mChannelKey;
     private String mProgramsKey;
+    private String mPlaylistUrl;
 
     Playlist(String name, List<Clip> clip, String playlistId) {
         mName = name;
@@ -108,7 +109,7 @@ public final class Playlist {
     private static List<Long> parseClipIds(String clipsIds) {
         List<Long> result = new ArrayList<>();
 
-        if (clipsIds != null) {
+        if (clipsIds != null && !clipsIds.isEmpty()) {
             String[] split = clipsIds.split(DELIM);
 
             for (String id : split) {
@@ -145,5 +146,13 @@ public final class Playlist {
 
     public String getProgramsKey() {
         return mProgramsKey;
+    }
+
+    public String getPlaylistUrl() {
+        return mPlaylistUrl;
+    }
+
+    public void setPlaylistUrl(String url) {
+        mPlaylistUrl = url;
     }
 }

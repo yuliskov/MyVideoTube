@@ -21,6 +21,9 @@ public class MySampleClipApi {
     private static final String RECOMMENDED_PROGRAMS_IDS = "recommended_programs_ids";
     private static final String HISTORY_CHANNEL_ID = "history_channel_id";
     private static final String HISTORY_PROGRAMS_IDS = "history_programs_ids";
+    private static final String SUBSCRIPTIONS_URL = "https://www.youtube.com/tv#/zylon-surface?c=FEsubscriptions&resume";
+    private static final String HISTORY_URL = "https://www.youtube.com/tv#/zylon-surface?c=FEmy_youtube&resume";
+    private static final String RECOMMENDED_URL = "https://www.youtube.com/tv#/zylon-surface?c=default&resume";
 
     public static Playlist getSubscriptionsPlaylist(Context context) {
         YouTubeVideoService service = YouTubeVideoService.instance();
@@ -28,7 +31,7 @@ public class MySampleClipApi {
 
         Playlist playlist = null;
 
-        if (subscriptions != null) {
+        if (subscriptions != null && !subscriptions.isEmpty()) {
             if (subscriptions.size() < 20) {
                 subscriptions.addAll(service.getNextSubscriptions());
                 subscriptions.addAll(service.getNextSubscriptions());
@@ -39,6 +42,7 @@ public class MySampleClipApi {
             playlist = new Playlist(context.getResources().getString(R.string.subscriptions_playlist_name), clips, Integer.toString(SUBSCRIPTIONS_ID));
             playlist.setChannelKey(SUBS_CHANNEL_ID);
             playlist.setProgramsKey(SUBS_PROGRAMS_IDS);
+            playlist.setPlaylistUrl(SUBSCRIPTIONS_URL);
         }
 
         return playlist;
@@ -50,7 +54,7 @@ public class MySampleClipApi {
 
         Playlist playlist = null;
 
-        if (history != null) {
+        if (history != null && !history.isEmpty()) {
             if (history.size() < 20) {
                 history.addAll(service.getNextHistory());
                 history.addAll(service.getNextHistory());
@@ -61,6 +65,7 @@ public class MySampleClipApi {
             playlist = new Playlist(context.getResources().getString(R.string.history_playlist_name), clips, Integer.toString(HISTORY_ID));
             playlist.setChannelKey(HISTORY_CHANNEL_ID);
             playlist.setProgramsKey(HISTORY_PROGRAMS_IDS);
+            playlist.setPlaylistUrl(HISTORY_URL);
         }
 
         return playlist;
@@ -72,7 +77,7 @@ public class MySampleClipApi {
 
         Playlist playlist = null;
 
-        if (recommended != null) {
+        if (recommended != null && !recommended.isEmpty()) {
             if (recommended.size() < 20) {
                 recommended.addAll(service.getNextRecommended());
                 recommended.addAll(service.getNextRecommended());
@@ -83,6 +88,7 @@ public class MySampleClipApi {
             playlist = new Playlist(context.getResources().getString(R.string.recommended_playlist_name), clips, Integer.toString(RECOMMENDED_ID));
             playlist.setChannelKey(RECOMMENDED_CHANNEL_ID);
             playlist.setProgramsKey(RECOMMENDED_PROGRAMS_IDS);
+            playlist.setPlaylistUrl(RECOMMENDED_URL);
         }
 
         return playlist;

@@ -27,7 +27,7 @@ public class RecommendationReceiverActivity extends Activity implements SampleCl
         if (clip != null) {
             Log.d(TAG, "Opening the clip " + clip);
 
-            Intent playVideo = AppUtil.getInstance(this).createVideoIntent(clip.getVideoUrl());
+            Intent playVideo = AppUtil.getInstance(this).createAppIntent(clip.getVideoUrl());
 
             startActivity(playVideo);
         } else {

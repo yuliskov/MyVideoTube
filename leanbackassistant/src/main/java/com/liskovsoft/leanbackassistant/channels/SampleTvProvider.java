@@ -12,6 +12,7 @@ import android.provider.BaseColumns;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.WorkerThread;
 import androidx.tvprovider.media.tv.Channel;
+import androidx.tvprovider.media.tv.Channel.Builder;
 import androidx.tvprovider.media.tv.ChannelLogoUtils;
 import androidx.tvprovider.media.tv.PreviewProgram;
 import androidx.tvprovider.media.tv.TvContractCompat;
@@ -227,19 +228,11 @@ public class SampleTvProvider {
 
     @WorkerThread
     static long addChannel(Context context, Playlist playlist) {
-        String channelInputId = createInputId(context);
-        Channel channel = new Channel.Builder()
-                .setDisplayName(playlist.getName())
-                .setDescription(playlist.getDescription())
-                .setType(TvContractCompat.Channels.TYPE_PREVIEW)
-                .setInputId(channelInputId)
-                .setAppLinkIntentUri(Uri.parse(SCHEME + "://" + APPS_LAUNCH_HOST
-                        + "/" + START_APP_ACTION_PATH))
-                .setInternalProviderId(playlist.getPlaylistId())
-                .build();
+        Channel.Builder builder = createChannelBuilder(context, playlist);
 
         Uri channelUri = context.getContentResolver().insert(Channels.CONTENT_URI,
-                channel.toContentValues());
+                builder.build().toContentValues());
+
         if (channelUri == null || channelUri.equals(Uri.EMPTY)) {
             Log.e(TAG, "Insert channel failed");
             return 0;
@@ -255,12 +248,34 @@ public class SampleTvProvider {
         return channelId;
     }
 
+    @WorkerThread
     static void addClipsToChannel(Context context, long channelId, List<Clip> clips) {
         int weight = clips.size();
         for (int i = 0; i < clips.size(); ++i, --weight) {
             Clip clip = clips.get(i);
 
             publishProgram(context, clip, channelId, weight);
+        }
+    }
+
+    @WorkerThread
+    static void updateChannel(Context context, Playlist playlist) {
+        long channelId = playlist.getChannelId();
+
+        if (channelId == -1) {
+            Log.d(TAG, "Invalid channel id " + channelId);
+            return;
+        }
+
+        Builder builder = createChannelBuilder(context, playlist);
+
+        int rowsUpdated = context.getContentResolver().update(
+                TvContractCompat.buildChannelUri(channelId), builder.build().toContentValues(), null, null);
+
+        if (rowsUpdated < 1) {
+            Log.e(TAG, "Update channel failed");
+        } else {
+            Log.d(TAG, "Channel updated " + playlist.getName());
         }
     }
 
@@ -289,6 +304,13 @@ public class SampleTvProvider {
                 TvContractCompat.buildPreviewProgramUri(programId), null, null);
         if (rowsDeleted < 1) {
             Log.e(TAG, "Delete program failed");
+        }
+    }
+
+    @WorkerThread
+    static void updateProgramsClips(Context context, List<Clip> wantClipsProgramsUpdate) {
+        for (Clip clip : wantClipsProgramsUpdate) {
+            SampleTvProvider.updateProgramClip(context, clip);
         }
     }
 
@@ -427,7 +449,7 @@ public class SampleTvProvider {
             .setTitle(clip.getTitle())
             .setDescription(clip.getDescription())
             .setPosterArtUri(cardUri)
-            .setIntent(AppUtil.getInstance(context).createVideoIntent(clip.getVideoUrl()))
+            .setIntent(AppUtil.getInstance(context).createAppIntent(clip.getVideoUrl()))
             .setPreviewVideoUri(previewUri)
             .setInternalProviderId(clip.getClipId())
             .setContentId(clip.getContentId())
@@ -435,5 +457,17 @@ public class SampleTvProvider {
             .setType(TvContractCompat.PreviewPrograms.TYPE_MOVIE);
 
         return baseBuilder;
+    }
+
+    private static Channel.Builder createChannelBuilder(Context context, Playlist playlist) {
+        Channel.Builder builder = new Channel.Builder()
+                .setDisplayName(playlist.getName())
+                .setDescription(playlist.getDescription())
+                .setType(TvContractCompat.Channels.TYPE_PREVIEW)
+                .setInputId(createInputId(context))
+                .setAppLinkIntent(AppUtil.getInstance(context).createAppIntent(playlist.getPlaylistUrl()))
+                .setInternalProviderId(playlist.getPlaylistId());
+
+        return builder;
     }
 }

@@ -43,7 +43,11 @@ public class AppUtil {
         return mParser;
     }
 
-    public Intent createVideoIntent(String url) {
+    public Intent createAppIntent(String url) {
+        if (url == null) {
+            return null;
+        }
+
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_VIEW);
         intent.setData(Uri.parse(url));

@@ -144,10 +144,14 @@ public class SynchronizeDatabaseJobService extends JobService {
                         setProgramsIds(programsKey, playlist.getPublishedClipsIds());
                     } else {
                         Log.d(TAG, "Updating " + playlist.getName() + "...");
+
                         playlist.setChannelPublishedId(getChannelId(channelKey));
                         playlist.restoreClipsIds(getProgramsIds(programsKey));
-                        updateProgramsClips(playlist.getClips()); // update clips that have program_id
+
+                        SampleTvProvider.updateChannel(mContext, playlist);
+                        SampleTvProvider.updateProgramsClips(mContext, playlist.getClips()); // update clips that have program_id
                         SampleTvProvider.addClipsToChannel(mContext, playlist.getChannelId(), playlist.getClips()); // add more clips
+
                         // all clips now published
                         setProgramsIds(programsKey, playlist.getPublishedClipsIds());
                     }
@@ -221,24 +225,24 @@ public class SynchronizeDatabaseJobService extends JobService {
             }
         }
 
-        private void updateProgramsClips(List<Clip> wantClipsProgramsUpdate) {
-            for (Clip clip : wantClipsProgramsUpdate) {
-                SampleTvProvider.updateProgramClip(mContext, clip);
-            }
-        }
+        //private void updateProgramsClips(List<Clip> wantClipsProgramsUpdate) {
+        //    for (Clip clip : wantClipsProgramsUpdate) {
+        //        SampleTvProvider.updateProgramClip(mContext, clip);
+        //    }
+        //}
 
-        private void unpublishPrograms(HashSet<Long> wantProgramsUnpublished) {
-            for (Long programId : wantProgramsUnpublished) {
-                SampleTvProvider.deleteProgram(mContext, programId);
-            }
-        }
+        //private void unpublishPrograms(HashSet<Long> wantProgramsUnpublished) {
+        //    for (Long programId : wantProgramsUnpublished) {
+        //        SampleTvProvider.deleteProgram(mContext, programId);
+        //    }
+        //}
 
-        private void publishClips(HashMap<Long, Clip> wantClipsPublished, long channelId,
-                int clipsPublishedAlready) {
-            int weight = clipsPublishedAlready + wantClipsPublished.size();
-            for (Clip clip : wantClipsPublished.values()) {
-                SampleTvProvider.publishProgram(mContext, clip, channelId, weight--);
-            }
-        }
+        //private void publishClips(HashMap<Long, Clip> wantClipsPublished, long channelId,
+        //        int clipsPublishedAlready) {
+        //    int weight = clipsPublishedAlready + wantClipsPublished.size();
+        //    for (Clip clip : wantClipsPublished.values()) {
+        //        SampleTvProvider.publishProgram(mContext, clip, channelId, weight--);
+        //    }
+        //}
     }
 }
