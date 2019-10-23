@@ -10,6 +10,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build.VERSION;
 import androidx.tvprovider.media.tv.TvContractCompat;
 import android.text.TextUtils;
 import com.liskovsoft.sharedutils.mylogger.Log;
@@ -34,14 +35,15 @@ import java.util.List;
 public class SynchronizeDatabaseJobService extends JobService {
     private SynchronizeDatabaseTask mSynchronizeDatabaseTask;
     private static final String TAG = SynchronizeDatabaseJobService.class.getSimpleName();
-
-    @TargetApi(23)
+    
     static void schedule(Context context) {
-        JobScheduler scheduler = context.getSystemService(JobScheduler.class);
-        scheduler.schedule(
-                new JobInfo.Builder(0, new ComponentName(context, SynchronizeDatabaseJobService.class))
-                .setOverrideDeadline(0)
-                .build());
+        if (VERSION.SDK_INT >= 23) {
+            JobScheduler scheduler = context.getSystemService(JobScheduler.class);
+            scheduler.schedule(
+                    new JobInfo.Builder(0, new ComponentName(context, SynchronizeDatabaseJobService.class))
+                            .setOverrideDeadline(0)
+                            .build());
+        }
     }
 
     @Override
