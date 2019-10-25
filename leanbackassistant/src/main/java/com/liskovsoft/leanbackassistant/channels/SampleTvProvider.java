@@ -230,8 +230,15 @@ public class SampleTvProvider {
     static long addChannel(Context context, Playlist playlist) {
         Channel.Builder builder = createChannelBuilder(context, playlist);
 
-        Uri channelUri = context.getContentResolver().insert(Channels.CONTENT_URI,
-                builder.build().toContentValues());
+        Uri channelUri = null;
+
+        try {
+            channelUri = context.getContentResolver().insert(Channels.CONTENT_URI,
+                    builder.build().toContentValues());
+        } catch (Exception e) { // channels not supported
+            Log.e(TAG, e.getMessage());
+            e.printStackTrace();
+        }
 
         if (channelUri == null || channelUri.equals(Uri.EMPTY)) {
             Log.e(TAG, "Insert channel failed");

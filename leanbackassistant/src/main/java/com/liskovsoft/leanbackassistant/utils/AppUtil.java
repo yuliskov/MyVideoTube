@@ -3,6 +3,7 @@ package com.liskovsoft.leanbackassistant.utils;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import com.liskovsoft.sharedutils.GlobalConstants;
 import com.liskovsoft.sharedutils.configparser.AssetPropertyParser2;
 import com.liskovsoft.sharedutils.configparser.ConfigParser;
 
@@ -52,6 +53,7 @@ public class AppUtil {
         intent.setAction(Intent.ACTION_VIEW);
         intent.setData(Uri.parse(url));
         intent.setClassName(getAppPackageName(), getBootstrapClassName());
+        intent.putExtra(GlobalConstants.STANDALONE_PLAYER, true);
 
         return intent;
     }
