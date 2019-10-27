@@ -3,7 +3,6 @@ package com.liskovsoft.leanbackassistant.channels;
 import android.content.Context;
 import androidx.tvprovider.media.tv.TvContractCompat;
 import com.liskovsoft.leanbackassistant.R;
-import com.liskovsoft.leanbackassistant.channels.SampleClipApi.GetClipByIdListener;
 import com.liskovsoft.myvideotubeapi.Video;
 import com.liskovsoft.youtubeapi.adapters.YouTubeVideoService;
 
@@ -24,6 +23,7 @@ public class MySampleClipApi {
     private static final String SUBSCRIPTIONS_URL = "https://www.youtube.com/tv#/zylon-surface?c=FEsubscriptions&resume";
     private static final String HISTORY_URL = "https://www.youtube.com/tv#/zylon-surface?c=FEmy_youtube&resume";
     private static final String RECOMMENDED_URL = "https://www.youtube.com/tv#/zylon-surface?c=default&resume";
+    private static final String GENERIC_CHANNEL_URL = "file:///android_asset/img/channels.png";
 
     public static Playlist getSubscriptionsPlaylist(Context context) {
         YouTubeVideoService service = YouTubeVideoService.instance();
@@ -43,6 +43,7 @@ public class MySampleClipApi {
             playlist.setChannelKey(SUBS_CHANNEL_ID);
             playlist.setProgramsKey(SUBS_PROGRAMS_IDS);
             playlist.setPlaylistUrl(SUBSCRIPTIONS_URL);
+            playlist.setChannelIconUrl(GENERIC_CHANNEL_URL);
         }
 
         return playlist;
@@ -66,6 +67,7 @@ public class MySampleClipApi {
             playlist.setChannelKey(HISTORY_CHANNEL_ID);
             playlist.setProgramsKey(HISTORY_PROGRAMS_IDS);
             playlist.setPlaylistUrl(HISTORY_URL);
+            playlist.setChannelIconUrl(GENERIC_CHANNEL_URL);
         }
 
         return playlist;
@@ -89,6 +91,7 @@ public class MySampleClipApi {
             playlist.setChannelKey(RECOMMENDED_CHANNEL_ID);
             playlist.setProgramsKey(RECOMMENDED_PROGRAMS_IDS);
             playlist.setPlaylistUrl(RECOMMENDED_URL);
+            playlist.setChannelIconUrl(GENERIC_CHANNEL_URL);
         }
 
         return playlist;
@@ -117,20 +120,5 @@ public class MySampleClipApi {
         }
 
         return null;
-    }
-
-    public static void getClipById(String clipId, GetClipByIdListener listener) {
-        Clip clip = null;
-
-        if (sCachedVideos != null) {
-            for (Clip v : sCachedVideos) {
-                if (clipId.equals(v.getClipId())) {
-                    clip = v;
-                    break;
-                }
-            }
-        }
-
-        listener.onGetClipById(clip);
     }
 }

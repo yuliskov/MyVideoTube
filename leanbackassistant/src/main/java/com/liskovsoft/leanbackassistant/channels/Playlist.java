@@ -26,11 +26,12 @@ public final class Playlist {
     private final String mPlaylistId;
     private List<Clip> mClips;
     private boolean mChannelPublished;
-    private long mChannelId;
+    private long mChannelId = -1;
     private static final String DELIM = ",";
     private String mChannelKey;
     private String mProgramsKey;
     private String mPlaylistUrl;
+    private String mChannelIconUrl;
 
     Playlist(String name, List<Clip> clip, String playlistId) {
         mName = name;
@@ -154,5 +155,13 @@ public final class Playlist {
 
     public void setPlaylistUrl(String url) {
         mPlaylistUrl = url;
+    }
+
+    public String getChannelIconUrl() {
+        return mChannelIconUrl;
+    }
+
+    public void setChannelIconUrl(String url) {
+        mChannelIconUrl = url;
     }
 }

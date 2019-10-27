@@ -228,6 +228,13 @@ public class SampleTvProvider {
 
     @WorkerThread
     static long addChannel(Context context, Playlist playlist) {
+        long oldChannelId = playlist.getChannelId();
+
+        if (oldChannelId != -1) {
+            Log.d(TAG, "Error: channel already published: " + oldChannelId);
+            return oldChannelId;
+        }
+
         Channel.Builder builder = createChannelBuilder(context, playlist);
 
         Uri channelUri = null;
@@ -270,7 +277,7 @@ public class SampleTvProvider {
         long channelId = playlist.getChannelId();
 
         if (channelId == -1) {
-            Log.d(TAG, "Invalid channel id " + channelId);
+            Log.d(TAG, "Error: channel not published yet: " + channelId);
             return;
         }
 
@@ -467,11 +474,14 @@ public class SampleTvProvider {
     }
 
     private static Channel.Builder createChannelBuilder(Context context, Playlist playlist) {
+        Uri channelIconUrl = playlist.getChannelIconUrl() == null ? null : Uri.parse(playlist.getChannelIconUrl());
+
         Channel.Builder builder = new Channel.Builder()
                 .setDisplayName(playlist.getName())
                 .setDescription(playlist.getDescription())
                 .setType(TvContractCompat.Channels.TYPE_PREVIEW)
                 .setInputId(createInputId(context))
+                .setAppLinkIconUri(channelIconUrl)
                 .setAppLinkIntent(AppUtil.getInstance(context).createAppIntent(playlist.getPlaylistUrl()))
                 .setInternalProviderId(playlist.getPlaylistId());
 
