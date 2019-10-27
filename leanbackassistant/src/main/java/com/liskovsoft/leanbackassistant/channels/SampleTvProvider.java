@@ -20,7 +20,6 @@ import androidx.tvprovider.media.tv.TvContractCompat.Channels;
 import androidx.tvprovider.media.tv.WatchNextProgram;
 import android.text.TextUtils;
 
-import com.liskovsoft.leanbackassistant.R;
 import com.liskovsoft.leanbackassistant.channels.scheduler.ClipData;
 import com.liskovsoft.leanbackassistant.utils.AppUtil;
 import com.liskovsoft.sharedutils.mylogger.Log;
@@ -86,10 +85,11 @@ public class SampleTvProvider {
      *                   a vector drawable.
      */
     @WorkerThread
-    static private void writeChannelLogo(Context context, long channelId,
-            @DrawableRes int drawableId) {
-        Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), drawableId);
-        ChannelLogoUtils.storeChannelLogo(context, channelId, bitmap);
+    static private void writeChannelLogo(Context context, long channelId, @DrawableRes int drawableId) {
+        if (channelId != -1 && drawableId != -1) {
+            Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), drawableId);
+            ChannelLogoUtils.storeChannelLogo(context, channelId, bitmap);
+        }
     }
 
     @WorkerThread
@@ -253,9 +253,10 @@ public class SampleTvProvider {
         }
 
         long channelId = ContentUris.parseId(channelUri);
+
         playlist.setChannelPublishedId(channelId);
 
-        writeChannelLogo(context, channelId, R.drawable.app_icon);
+        writeChannelLogo(context, channelId, playlist.getLogoResId());
 
         addClipsToChannel(context, channelId, playlist.getClips());
 
@@ -280,6 +281,8 @@ public class SampleTvProvider {
             Log.d(TAG, "Error: channel not published yet: " + channelId);
             return;
         }
+
+        writeChannelLogo(context, channelId, playlist.getLogoResId());
 
         Builder builder = createChannelBuilder(context, playlist);
 
@@ -474,14 +477,11 @@ public class SampleTvProvider {
     }
 
     private static Channel.Builder createChannelBuilder(Context context, Playlist playlist) {
-        Uri channelIconUrl = playlist.getChannelIconUrl() == null ? null : Uri.parse(playlist.getChannelIconUrl());
-
         Channel.Builder builder = new Channel.Builder()
                 .setDisplayName(playlist.getName())
                 .setDescription(playlist.getDescription())
                 .setType(TvContractCompat.Channels.TYPE_PREVIEW)
                 .setInputId(createInputId(context))
-                .setAppLinkIconUri(channelIconUrl)
                 .setAppLinkIntent(AppUtil.getInstance(context).createAppIntent(playlist.getPlaylistUrl()))
                 .setInternalProviderId(playlist.getPlaylistId());
 

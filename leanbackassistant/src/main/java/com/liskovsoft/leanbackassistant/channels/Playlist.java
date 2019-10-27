@@ -31,7 +31,7 @@ public final class Playlist {
     private String mChannelKey;
     private String mProgramsKey;
     private String mPlaylistUrl;
-    private String mChannelIconUrl;
+    private int mLogoResId = -1;
 
     Playlist(String name, List<Clip> clip, String playlistId) {
         mName = name;
@@ -157,11 +157,11 @@ public final class Playlist {
         mPlaylistUrl = url;
     }
 
-    public String getChannelIconUrl() {
-        return mChannelIconUrl;
+    public int getLogoResId() {
+        return mLogoResId;
     }
 
-    public void setChannelIconUrl(String url) {
-        mChannelIconUrl = url;
+    public void setLogoResId(int resId) {
+        mLogoResId = resId;
     }
 }
