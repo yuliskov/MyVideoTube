@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MySampleClipApi {
-    private static List<Clip> sCachedVideos;
     private static final int SUBSCRIPTIONS_ID = 1;
     private static final int HISTORY_ID = 2;
     private static final int RECOMMENDED_ID = 3;
