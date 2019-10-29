@@ -27,13 +27,15 @@ public class SynchronizeDatabaseJobService extends JobService {
     private SynchronizeDatabaseTask mSynchronizeDatabaseTask;
     private static final String TAG = SynchronizeDatabaseJobService.class.getSimpleName();
     private static boolean sInProgress;
+    private static final long RUN_INTERVAL_MS = 1_800_000; // 30 min
 
     static void schedule(Context context) {
         if (VERSION.SDK_INT >= 23 && !sInProgress) {
             JobScheduler scheduler = context.getSystemService(JobScheduler.class);
             scheduler.schedule(
                     new JobInfo.Builder(0, new ComponentName(context, SynchronizeDatabaseJobService.class))
-                            .setOverrideDeadline(0)
+                            //.setOverrideDeadline(0)
+                            .setPeriodic(RUN_INTERVAL_MS)
                             .build());
             sInProgress = true;
         }
