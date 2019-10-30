@@ -8,9 +8,12 @@ import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Build.VERSION;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.prefs.GlobalPreferences;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * JobScheduler task to synchronize the TV provider database with the desired list of channels and
@@ -27,15 +30,16 @@ public class SynchronizeDatabaseJobService extends JobService {
     private SynchronizeDatabaseTask mSynchronizeDatabaseTask;
     private static final String TAG = SynchronizeDatabaseJobService.class.getSimpleName();
     private static boolean sInProgress;
-    private static final long RUN_INTERVAL_MS = 1_800_000; // 30 min
 
     static void schedule(Context context) {
         if (VERSION.SDK_INT >= 23 && !sInProgress) {
             JobScheduler scheduler = context.getSystemService(JobScheduler.class);
             scheduler.schedule(
                     new JobInfo.Builder(0, new ComponentName(context, SynchronizeDatabaseJobService.class))
-                            //.setOverrideDeadline(0)
-                            .setPeriodic(RUN_INTERVAL_MS)
+                            .setPeriodic(TimeUnit.MINUTES.toMillis(30))
+                            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                            .setRequiresDeviceIdle(false)
+                            .setRequiresCharging(false)
                             .build());
             sInProgress = true;
         }

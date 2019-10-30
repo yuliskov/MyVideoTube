@@ -2,6 +2,11 @@
           xmlns:tools="http://schemas.android.com/tools"
           package="com.liskovsoft.leanbackassistant">
 
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.QUICKBOOT_POWERON" />
+    <uses-permission android:name="com.android.providers.tv.permission.READ_EPG_DATA" />
+    <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
+
     <application android:allowBackup="true"
                  android:label="@string/app_name"
                  android:supportsRtl="true"
@@ -34,20 +39,6 @@
 
         <!--    CHANNELS    -->
 
-        <activity
-            android:name=".channels.RecommendationReceiverActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <data
-                    android:scheme="tvhomescreenchannels"
-                    android:host="com.google.android.tvhomescreenchannels"
-                    android:pathPrefix="/playvideo"
-                />
-            </intent-filter>
-        </activity>
-
         <service
             android:name=".channels.SynchronizeDatabaseJobService"
             android:permission="android.permission.BIND_JOB_SERVICE"
@@ -57,7 +48,7 @@
             android:name=".channels.RunOnInstallReceiver"
             android:exported="true">
             <intent-filter>
-                <!-- <action android:name="android.intent.action.SCREEN_ON" /> -->
+                <action android:name="android.intent.action.SCREEN_ON" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <!-- Called one time after app is installed -->
                 <action android:name="android.media.tv.action.INITIALIZE_PROGRAMS" />
