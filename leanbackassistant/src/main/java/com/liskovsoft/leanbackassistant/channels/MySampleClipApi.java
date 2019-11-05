@@ -27,7 +27,13 @@ public class MySampleClipApi {
         YouTubeVideoService service = YouTubeVideoService.instance();
         List<Video> subscriptions = service.getSubscriptions();
 
-        Playlist playlist = null;
+        Playlist playlist = new Playlist(
+                context.getResources().getString(R.string.subscriptions_playlist_name),
+                Integer.toString(SUBSCRIPTIONS_ID));
+        playlist.setChannelKey(SUBS_CHANNEL_ID);
+        playlist.setProgramsKey(SUBS_PROGRAMS_IDS);
+        playlist.setPlaylistUrl(SUBSCRIPTIONS_URL);
+        playlist.setLogoResId(R.drawable.generic_channels);
 
         if (subscriptions != null && !subscriptions.isEmpty()) {
             if (subscriptions.size() < 20) {
@@ -37,11 +43,7 @@ public class MySampleClipApi {
             }
 
             List<Clip> clips = convertToClips(subscriptions);
-            playlist = new Playlist(context.getResources().getString(R.string.subscriptions_playlist_name), clips, Integer.toString(SUBSCRIPTIONS_ID));
-            playlist.setChannelKey(SUBS_CHANNEL_ID);
-            playlist.setProgramsKey(SUBS_PROGRAMS_IDS);
-            playlist.setPlaylistUrl(SUBSCRIPTIONS_URL);
-            playlist.setLogoResId(R.drawable.generic_channels);
+            playlist.setClips(clips);
         }
 
         return playlist;
@@ -51,7 +53,13 @@ public class MySampleClipApi {
         YouTubeVideoService service = YouTubeVideoService.instance();
         List<Video> history = service.getHistory();
 
-        Playlist playlist = null;
+        Playlist playlist = new Playlist(
+                context.getResources().getString(R.string.history_playlist_name),
+                Integer.toString(HISTORY_ID));
+        playlist.setChannelKey(HISTORY_CHANNEL_ID);
+        playlist.setProgramsKey(HISTORY_PROGRAMS_IDS);
+        playlist.setPlaylistUrl(HISTORY_URL);
+        playlist.setLogoResId(R.drawable.generic_channels);
 
         if (history != null && !history.isEmpty()) {
             if (history.size() < 20) {
@@ -61,11 +69,7 @@ public class MySampleClipApi {
             }
 
             List<Clip> clips = convertToClips(history);
-            playlist = new Playlist(context.getResources().getString(R.string.history_playlist_name), clips, Integer.toString(HISTORY_ID));
-            playlist.setChannelKey(HISTORY_CHANNEL_ID);
-            playlist.setProgramsKey(HISTORY_PROGRAMS_IDS);
-            playlist.setPlaylistUrl(HISTORY_URL);
-            playlist.setLogoResId(R.drawable.generic_channels);
+            playlist.setClips(clips);
         }
 
         return playlist;
@@ -75,7 +79,13 @@ public class MySampleClipApi {
         YouTubeVideoService service = YouTubeVideoService.instance();
         List<Video> recommended = service.getRecommended();
 
-        Playlist playlist = null;
+        Playlist playlist = new Playlist(
+                context.getResources().getString(R.string.recommended_playlist_name),
+                Integer.toString(RECOMMENDED_ID));
+        playlist.setChannelKey(RECOMMENDED_CHANNEL_ID);
+        playlist.setProgramsKey(RECOMMENDED_PROGRAMS_IDS);
+        playlist.setPlaylistUrl(RECOMMENDED_URL);
+        playlist.setLogoResId(R.drawable.generic_channels);
 
         if (recommended != null && !recommended.isEmpty()) {
             if (recommended.size() < 20) {
@@ -85,11 +95,7 @@ public class MySampleClipApi {
             }
 
             List<Clip> clips = convertToClips(recommended);
-            playlist = new Playlist(context.getResources().getString(R.string.recommended_playlist_name), clips, Integer.toString(RECOMMENDED_ID));
-            playlist.setChannelKey(RECOMMENDED_CHANNEL_ID);
-            playlist.setProgramsKey(RECOMMENDED_PROGRAMS_IDS);
-            playlist.setPlaylistUrl(RECOMMENDED_URL);
-            playlist.setLogoResId(R.drawable.generic_channels);
+            playlist.setClips(clips);
         }
 
         return playlist;

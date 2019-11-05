@@ -15,6 +15,7 @@
 package com.liskovsoft.leanbackassistant.channels;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class Playlist {
@@ -33,6 +34,10 @@ public final class Playlist {
     private String mPlaylistUrl;
     private int mLogoResId = -1;
 
+    Playlist(String name, String playlistId) {
+        this(name, Collections.emptyList(), playlistId);
+    }
+
     Playlist(String name, List<Clip> clip, String playlistId) {
         mName = name;
         mTitle = "playlist title";
@@ -45,6 +50,10 @@ public final class Playlist {
 
     public String getName() {
         return mName;
+    }
+
+    void setClips(List<Clip> clips) {
+        mClips = clips;
     }
 
     List<Clip> getClips() {
