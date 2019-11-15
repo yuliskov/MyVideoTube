@@ -1,5 +1,6 @@
 package com.liskovsoft.leanbackassistant.channels;
 
+import android.annotation.TargetApi;
 import android.content.ComponentName;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -7,6 +8,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.tv.TvContract;
 import android.net.Uri;
 import android.provider.BaseColumns;
 import androidx.annotation.DrawableRes;
@@ -67,6 +69,12 @@ public class SampleTvProvider {
 
     private static final Uri PREVIEW_PROGRAMS_CONTENT_URI =
             Uri.parse("content://android.media.tv/preview_program");
+
+    @TargetApi(21)
+    private static String[] CHANNELS_PROJECTION = {
+            TvContractCompat.Channels._ID,
+            TvContract.Channels.COLUMN_DISPLAY_NAME,
+            TvContractCompat.Channels.COLUMN_BROWSABLE};
 
     private SampleTvProvider() {
     }
@@ -233,6 +241,14 @@ public class SampleTvProvider {
         if (oldChannelId != -1) {
             Log.d(TAG, "Error: channel already published: " + oldChannelId);
             return oldChannelId;
+        }
+
+        long foundId = findChannel(context, playlist.getName());
+
+        if (foundId != -1) {
+            playlist.setChannelPublishedId(foundId);
+            Log.d(TAG, "Error: channel already published but not memorized by the app: " + foundId);
+            return foundId;
         }
 
         Channel.Builder builder = createChannelBuilder(context, playlist);
@@ -486,5 +502,34 @@ public class SampleTvProvider {
                 .setInternalProviderId(playlist.getPlaylistId());
 
         return builder;
+    }
+
+    private static long findChannel(Context context, String name) {
+        Cursor cursor = context.getContentResolver().query(
+                TvContractCompat.Channels.CONTENT_URI,
+                CHANNELS_PROJECTION,
+                null,
+                null,
+                null
+        );
+
+        if (cursor != null) {
+            try {
+                if (cursor.moveToFirst()) {
+                    do {
+                        Channel channel = Channel.fromCursor(cursor);
+                        if (name.equals(channel.getDisplayName())) {
+                            return channel.getId();
+                        }
+
+                    } while (cursor.moveToNext());
+                }
+            } finally {
+                cursor.close();
+            }
+
+        }
+
+        return -1;
     }
 }
