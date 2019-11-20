@@ -30,32 +30,9 @@ import java.util.List;
 
 public class SampleTvProvider {
     private static final String TAG = SampleTvProvider.class.getSimpleName();
-    /**
-     * Indices into "CHANNELS_MAP_PROJECTION" and if that changes, these should too.
-     */
-    static final int CHANNELS_COLUMN_ID_INDEX = 0;
-    static final int CHANNELS_COLUMN_INTERNAL_PROVIDER_ID_INDEX = 1;
-    static final int CHANNELS_COLUMN_BROWSABLE_INDEX = 2;
-    static final String[] CHANNELS_MAP_PROJECTION =
-            {Channels._ID, Channels.COLUMN_INTERNAL_PROVIDER_ID, Channels.COLUMN_BROWSABLE};
-    /**
-     * Indices into "PROGRAMS_MAP_PROJECTION" and if that changes, these should too.
-     */
-    static final int PROGRAMS_COLUMN_ID_INDEX = 0;
-    static final int PROGRAMS_COLUMN_INTERNAL_PROVIDER_ID_INDEX = 1;
-    static final int PROGRAMS_COLUMN_TITLE_INDEX = 2;
-    static final int PROGRAMS_COLUMN_INTERNAL_INTERACTION_TYPE_INDEX = 3;
-    static final int PROGRAMS_COLUMN_INTERNAL_INTERACTION_COUNT_INDEX = 4;
-    static final String[] PROGRAMS_MAP_PROJECTION =
-            {TvContractCompat.PreviewPrograms._ID,
-                    TvContractCompat.PreviewPrograms.COLUMN_INTERNAL_PROVIDER_ID,
-                    TvContractCompat.PreviewPrograms.COLUMN_TITLE,
-                    TvContractCompat.PreviewProgramColumns.COLUMN_INTERACTION_TYPE,
-                    TvContractCompat.PreviewProgramColumns.COLUMN_INTERACTION_COUNT};
     private static final String SCHEME = "tvhomescreenchannels";
     private static final String APPS_LAUNCH_HOST = "com.google.android.tvhomescreenchannels";
     private static final String PLAY_VIDEO_ACTION_PATH = "playvideo";
-    private static final String START_APP_ACTION_PATH = "startapp";
     /**
      * Index into "WATCH_NEXT_MAP_PROJECTION" and if that changes, this should change too.
      */
@@ -235,28 +212,41 @@ public class SampleTvProvider {
     }
 
     @WorkerThread
-    static long addChannel(Context context, Playlist playlist) {
+    public static long createOrUpdateChannel(Context context, Playlist playlist) {
         long oldChannelId = playlist.getChannelId();
 
         if (oldChannelId != -1) {
-            Log.d(TAG, "Error: channel already published: " + oldChannelId);
+            Log.d(TAG, "Oops: channel already published. Doing update instead... " + oldChannelId);
+            updateChannel(context, playlist);
+            addClipsToChannel(context, oldChannelId, playlist.getClips());
             return oldChannelId;
         }
 
         long foundId = findChannel(context, playlist.getName());
 
         if (foundId != -1) {
+            Log.d(TAG, "Oops: channel already published but not memorized by the app. Doing update instead... " + foundId);
             playlist.setChannelPublishedId(foundId);
-            Log.d(TAG, "Error: channel already published but not memorized by the app: " + foundId);
+            updateChannel(context, playlist);
+            addClipsToChannel(context, foundId, playlist.getClips());
             return foundId;
         }
 
+        long channelId = createChannel(context, playlist);
+
+        addClipsToChannel(context, channelId, playlist.getClips());
+
+        return channelId;
+    }
+
+    private static long createChannel(Context context, Playlist playlist) {
         Channel.Builder builder = createChannelBuilder(context, playlist);
 
         Uri channelUri = null;
 
         try {
-            channelUri = context.getContentResolver().insert(Channels.CONTENT_URI,
+            channelUri = context.getContentResolver().insert(
+                    Channels.CONTENT_URI,
                     builder.build().toContentValues());
         } catch (Exception e) { // channels not supported
             Log.e(TAG, e.getMessage());
@@ -265,7 +255,7 @@ public class SampleTvProvider {
 
         if (channelUri == null || channelUri.equals(Uri.EMPTY)) {
             Log.e(TAG, "Insert channel failed");
-            return 0;
+            return -1;
         }
 
         long channelId = ContentUris.parseId(channelUri);
@@ -274,13 +264,23 @@ public class SampleTvProvider {
 
         writeChannelLogo(context, channelId, playlist.getLogoResId());
 
-        addClipsToChannel(context, channelId, playlist.getClips());
-
         return channelId;
     }
 
     @WorkerThread
-    static void addClipsToChannel(Context context, long channelId, List<Clip> clips) {
+    private static void addClipsToChannel(Context context, long channelId, List<Clip> clips) {
+        if (channelId == -1) {
+            Log.d(TAG, "Cant add clips: channelId == -1");
+            return;
+        }
+
+        if (clips.size() == 0) {
+            Log.d(TAG, "Cant add clips: clips.size() == 0");
+            return;
+        }
+
+        cleanupChannel(context, channelId);
+
         int weight = clips.size();
         for (int i = 0; i < clips.size(); ++i, --weight) {
             Clip clip = clips.get(i);
@@ -289,8 +289,12 @@ public class SampleTvProvider {
         }
     }
 
+    private static void cleanupChannel(Context context, long channelId) {
+        context.getContentResolver().delete(TvContractCompat.buildPreviewProgramsUriForChannel(channelId), null, null);
+    }
+
     @WorkerThread
-    static void updateChannel(Context context, Playlist playlist) {
+    private static void updateChannel(Context context, Playlist playlist) {
         long channelId = playlist.getChannelId();
 
         if (channelId == -1) {
@@ -332,7 +336,7 @@ public class SampleTvProvider {
     }
 
     @WorkerThread
-    static void deleteProgram(Context context, long programId) {
+    private static void deleteProgram(Context context, long programId) {
         int rowsDeleted = context.getContentResolver().delete(
                 TvContractCompat.buildPreviewProgramUri(programId), null, null);
         if (rowsDeleted < 1) {
@@ -340,78 +344,7 @@ public class SampleTvProvider {
         }
     }
 
-    @WorkerThread
-    static void updateProgramsClips(Context context, List<Clip> wantClipsProgramsUpdate) {
-        for (Clip clip : wantClipsProgramsUpdate) {
-            SampleTvProvider.updateProgramClip(context, clip);
-        }
-    }
-
-    @WorkerThread
-    static void updateProgramClipSimple(Context context, Clip clip) {
-        long programId = clip.getProgramId();
-
-        if (programId == -1) {
-            Log.e(TAG, "Oops. Clip not published yet. Exiting...");
-            return;
-        }
-
-        Uri programUri = TvContractCompat.buildPreviewProgramUri(programId);
-
-        Log.d(TAG, "Updating clip " + programUri);
-
-        PreviewProgram.Builder builder = createProgramBuilder(context, clip);
-
-        int rowsUpdated = context.getContentResolver().update(programUri, builder.build().toContentValues(), null, null);
-
-        if (rowsUpdated < 1) {
-            Log.e(TAG, "Update program failed");
-        } else {
-            Log.d(TAG, "Program clip updated " + clip.getTitle());
-        }
-    }
-
-    @WorkerThread
-    static void updateProgramClip(Context context, Clip clip) {
-        long programId = clip.getProgramId();
-
-        if (programId == -1) {
-            Log.e(TAG, "Oops. Clip not published yet. Exiting...");
-            return;
-        }
-
-        Uri programUri = TvContractCompat.buildPreviewProgramUri(programId);
-
-        Log.d(TAG, "Updating clip " + programUri);
-
-        try (Cursor cursor = context.getContentResolver().query(programUri, null, null, null, null)) {
-
-            int rowsUpdated = 0;
-
-            if (cursor != null) {
-                if (!cursor.moveToFirst()) {
-                    Log.e(TAG, "Update program failed");
-                }
-
-                PreviewProgram program = PreviewProgram.fromCursor(cursor);
-
-                PreviewProgram.Builder builder = createProgramBuilder(new PreviewProgram.Builder(program), context, clip);
-
-                rowsUpdated = context.getContentResolver().update(programUri, builder.build().toContentValues(), null, null);
-            }
-
-            if (rowsUpdated < 1) {
-                Log.e(TAG, "Update program failed");
-            } else {
-                Log.d(TAG, "Program clip updated " + clip.getTitle());
-            }
-        } catch (Exception ex) {
-            Log.e(TAG, ex.getMessage());
-            ex.printStackTrace();
-        }
-    }
-
-    static void publishProgram(Context context, Clip clip, long channelId, int weight) {
+    private static void publishProgram(Context context, Clip clip, long channelId, int weight) {
         if (clip.getProgramId() != -1) {
             Log.e(TAG, "Clip already published. Exiting...");
             return;
@@ -513,13 +446,21 @@ public class SampleTvProvider {
                 null
         );
 
+        long channelId = -1;
+
         if (cursor != null) {
             try {
                 if (cursor.moveToFirst()) {
                     do {
                         Channel channel = Channel.fromCursor(cursor);
                         if (name.equals(channel.getDisplayName())) {
-                            return channel.getId();
+                            if (channelId == -1) {
+                                Log.d(TAG, "Channel found: " + name);
+                                channelId = channel.getId();
+                            } else {
+                                Log.d(TAG, "Duplicate channel deleted: " + name);
+                                deleteChannel(context, channel.getId());
+                            }
                         }
 
                     } while (cursor.moveToNext());
@@ -530,6 +471,146 @@ public class SampleTvProvider {
 
         }
 
-        return -1;
+        return channelId;
     }
+
+    //@WorkerThread
+    //static void updateChannelOld(Context context, Playlist playlist) {
+    //    long channelId = playlist.getChannelId();
+    //
+    //    if (channelId == -1) {
+    //        Log.d(TAG, "Error: channel not published yet: " + channelId);
+    //        return;
+    //    }
+    //
+    //    writeChannelLogo(context, channelId, playlist.getLogoResId());
+    //
+    //    Builder builder = createChannelBuilder(context, playlist);
+    //
+    //    int rowsUpdated = context.getContentResolver().update(
+    //            TvContractCompat.buildChannelUri(channelId), builder.build().toContentValues(), null, null);
+    //
+    //    if (rowsUpdated < 1) {
+    //        Log.e(TAG, "Update channel failed");
+    //    } else {
+    //        Log.d(TAG, "Channel updated " + playlist.getName());
+    //    }
+    //}
+
+    //@WorkerThread
+    //static long addChannel(Context context, Playlist playlist) {
+    //    long oldChannelId = playlist.getChannelId();
+    //
+    //    if (oldChannelId != -1) {
+    //        Log.d(TAG, "Error: channel already published: " + oldChannelId);
+    //        return oldChannelId;
+    //    }
+    //
+    //    long foundId = findChannel(context, playlist.getName());
+    //
+    //    if (foundId != -1) {
+    //        Log.d(TAG, "Error: channel already published but not memorized by the app: " + foundId);
+    //        playlist.setChannelPublishedId(foundId);
+    //        addClipsToChannel(context, foundId, playlist.getClips());
+    //        return foundId;
+    //    }
+    //
+    //    Channel.Builder builder = createChannelBuilder(context, playlist);
+    //
+    //    Uri channelUri = null;
+    //
+    //    try {
+    //        channelUri = context.getContentResolver().insert(Channels.CONTENT_URI,
+    //                builder.build().toContentValues());
+    //    } catch (Exception e) { // channels not supported
+    //        Log.e(TAG, e.getMessage());
+    //        e.printStackTrace();
+    //    }
+    //
+    //    if (channelUri == null || channelUri.equals(Uri.EMPTY)) {
+    //        Log.e(TAG, "Insert channel failed");
+    //        return 0;
+    //    }
+    //
+    //    long channelId = ContentUris.parseId(channelUri);
+    //
+    //    playlist.setChannelPublishedId(channelId);
+    //
+    //    writeChannelLogo(context, channelId, playlist.getLogoResId());
+    //
+    //    addClipsToChannel(context, channelId, playlist.getClips());
+    //
+    //    return channelId;
+    //}
+
+    //@WorkerThread
+    //static void updateProgramsClips(Context context, List<Clip> wantClipsProgramsUpdate) {
+    //    for (Clip clip : wantClipsProgramsUpdate) {
+    //        SampleTvProvider.updateProgramClip(context, clip);
+    //    }
+    //}
+    //
+    //@WorkerThread
+    //static void updateProgramClipSimple(Context context, Clip clip) {
+    //    long programId = clip.getProgramId();
+    //
+    //    if (programId == -1) {
+    //        Log.e(TAG, "Oops. Clip not published yet. Exiting...");
+    //        return;
+    //    }
+    //
+    //    Uri programUri = TvContractCompat.buildPreviewProgramUri(programId);
+    //
+    //    Log.d(TAG, "Updating clip " + programUri);
+    //
+    //    PreviewProgram.Builder builder = createProgramBuilder(context, clip);
+    //
+    //    int rowsUpdated = context.getContentResolver().update(programUri, builder.build().toContentValues(), null, null);
+    //
+    //    if (rowsUpdated < 1) {
+    //        Log.e(TAG, "Update program failed");
+    //    } else {
+    //        Log.d(TAG, "Program clip updated " + clip.getTitle());
+    //    }
+    //}
+
+    //@WorkerThread
+    //static void updateProgramClip(Context context, Clip clip) {
+    //    long programId = clip.getProgramId();
+    //
+    //    if (programId == -1) {
+    //        Log.e(TAG, "Oops. Clip not published yet. Exiting...");
+    //        return;
+    //    }
+    //
+    //    Uri programUri = TvContractCompat.buildPreviewProgramUri(programId);
+    //
+    //    Log.d(TAG, "Updating clip " + programUri);
+    //
+    //    try (Cursor cursor = context.getContentResolver().query(programUri, null, null, null, null)) {
+    //
+    //        int rowsUpdated = 0;
+    //
+    //        if (cursor != null) {
+    //            if (!cursor.moveToFirst()) {
+    //                Log.e(TAG, "Update program failed");
+    //            }
+    //
+    //            PreviewProgram program = PreviewProgram.fromCursor(cursor);
+    //
+    //            PreviewProgram.Builder builder = createProgramBuilder(new PreviewProgram.Builder(program), context, clip);
+    //
+    //            rowsUpdated = context.getContentResolver().update(programUri, builder.build().toContentValues(), null, null);
+    //        }
+    //
+    //        if (rowsUpdated < 1) {
+    //            Log.e(TAG, "Update program failed");
+    //        } else {
+    //            Log.d(TAG, "Program clip updated " + clip.getTitle());
+    //        }
+    //    } catch (Exception ex) {
+    //        Log.e(TAG, ex.getMessage());
+    //        ex.printStackTrace();
+    //    }
+    //}
 }

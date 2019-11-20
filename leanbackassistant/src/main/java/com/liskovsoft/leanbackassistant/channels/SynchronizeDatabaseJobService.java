@@ -8,7 +8,6 @@ import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Build.VERSION;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.prefs.GlobalPreferences;
@@ -32,21 +31,42 @@ public class SynchronizeDatabaseJobService extends JobService {
     private static boolean sInProgress;
 
     static void schedule(Context context) {
-        if (VERSION.SDK_INT >= 23 && !sInProgress) {
+        if (VERSION.SDK_INT >= 23) {
+            Log.d(TAG, "Registering Channels update job...");
             JobScheduler scheduler = context.getSystemService(JobScheduler.class);
+
+            //// run one-shot job
+            //scheduler.schedule(
+            //        new JobInfo.Builder(0, new ComponentName(context, SynchronizeDatabaseJobService.class))
+            //                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+            //                .setRequiresDeviceIdle(false)
+            //                .setRequiresCharging(false)
+            //                .setMinimumLatency(1)
+            //                .setOverrideDeadline(1)
+            //                .build());
+
+            // setup scheduled job
             scheduler.schedule(
-                    new JobInfo.Builder(0, new ComponentName(context, SynchronizeDatabaseJobService.class))
+                    new JobInfo.Builder(1, new ComponentName(context, SynchronizeDatabaseJobService.class))
                             .setPeriodic(TimeUnit.MINUTES.toMillis(30))
                             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                             .setRequiresDeviceIdle(false)
                             .setRequiresCharging(false)
                             .build());
-            sInProgress = true;
         }
     }
 
     @Override
     public boolean onStartJob(JobParameters jobParameters) {
+        if (sInProgress) {
+            Log.d(TAG, "Channels update job already in progress. Exiting...");
+            return true;
+        }
+
+        Log.d(TAG, "Starting Channels update job...");
+
+        sInProgress = true;
+
         mSynchronizeDatabaseTask = new SynchronizeDatabaseTask(this, jobParameters);
         // NOTE: fetching channels in background
         mSynchronizeDatabaseTask.execute();
@@ -61,13 +81,15 @@ public class SynchronizeDatabaseJobService extends JobService {
             mSynchronizeDatabaseTask = null;
         }
 
+        sInProgress = false;
+
         return true;
     }
 
     /**
      * Publish any default channels not already published.
      */
-    private class SynchronizeDatabaseTask extends AsyncTask<Void, Void, Void> {
+    private class SynchronizeDatabaseTask extends AsyncTask<Void, Void, Exception> {
         private final GlobalPreferences mPrefs;
         private Context mContext;
         private JobParameters mJobParameters;
@@ -79,62 +101,35 @@ public class SynchronizeDatabaseJobService extends JobService {
         }
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Exception doInBackground(Void... params) {
             Log.d(TAG, "Syncing channels...");
 
-            updateOrPublish(MySampleClipApi.getSubscriptionsPlaylist(mContext));
-            updateOrPublish(MySampleClipApi.getRecommendedPlaylist(mContext));
-            updateOrPublish(MySampleClipApi.getHistoryPlaylist(mContext));
+            try {
+                updateOrPublish(MySampleClipApi.getSubscriptionsPlaylist(mContext));
+                updateOrPublish(MySampleClipApi.getRecommendedPlaylist(mContext));
+                updateOrPublish(MySampleClipApi.getHistoryPlaylist(mContext));
+            } catch (Exception e) {
+                e.printStackTrace();
+                return e;
+            }
 
             return null;
         }
 
         private void updateOrPublish(Playlist playlist) {
             if (playlist != null) {
-                String channelKey = playlist.getChannelKey();
-                String programsKey = playlist.getProgramsKey();
-
-                if (channelKey != null && programsKey != null) {
-                    if (getChannelId(channelKey) == -1 || getProgramsIds(programsKey) == null) {
-                        Log.d(TAG, "Add channel: " + playlist.getName());
-                        SampleTvProvider.addChannel(mContext, playlist);
-                        setChannelId(channelKey, playlist.getChannelId());
-                        setProgramsIds(programsKey, playlist.getPublishedClipsIds());
-                    } else {
-                        Log.d(TAG, "Updating " + playlist.getName() + "...");
-
-                        playlist.setChannelPublishedId(getChannelId(channelKey));
-                        playlist.restoreClipsIds(getProgramsIds(programsKey));
-
-                        SampleTvProvider.updateChannel(mContext, playlist);
-                        SampleTvProvider.updateProgramsClips(mContext, playlist.getClips()); // update clips that have program_id
-                        SampleTvProvider.addClipsToChannel(mContext, playlist.getChannelId(), playlist.getClips()); // add more clips
-
-                        // all clips now published
-                        setProgramsIds(programsKey, playlist.getPublishedClipsIds());
-                    }
-                }
+                SampleTvProvider.createOrUpdateChannel(mContext, playlist);
             }
         }
 
-        private void setProgramsIds(String programsKey, String clipsIds) {
-            mPrefs.putString(programsKey, clipsIds);
-        }
-
-        private void setChannelId(String programsKey, long channelId) {
-            mPrefs.putLong(programsKey, channelId);
-        }
-
-        private String getProgramsIds(String programsKey) {
-            return mPrefs.getString(programsKey, null);
-        }
-
-        private long getChannelId(String channelKey) {
-            return mPrefs.getLong(channelKey, -1);
-        }
-
         @Override
-        protected void onPostExecute(Void result) {
+        protected void onPostExecute(Exception e) {
+            if (e != null) {
+                Log.e(TAG, "Oops. Exception while syncing: " + e.getMessage());
+            } else {
+                Log.d(TAG, "Channels synced successfully.");
+            }
+
             sInProgress = false;
             mSynchronizeDatabaseTask = null;
             jobFinished(mJobParameters, false);
