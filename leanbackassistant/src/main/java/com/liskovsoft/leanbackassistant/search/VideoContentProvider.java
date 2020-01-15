@@ -31,6 +31,7 @@ import java.util.List;
 public class VideoContentProvider extends ContentProvider {
     private static final String TAG = VideoContentProvider.class.getSimpleName();
     private static final String AUTHORITY = "com.liskovsoft.leanbackassistant";
+    private static final int SEARCH_LIMIT = 40;
     private VideoService mService;
 
     // UriMatcher constant for search suggestions
@@ -92,10 +93,9 @@ public class VideoContentProvider extends ContentProvider {
         if (mUriMatcher.match(uri) == SEARCH_SUGGEST) {
             Log.d(TAG, "Search suggestions requested.");
 
-            String limitStr = uri.getQueryParameter("limit");
-            int limit = limitStr != null ? Integer.parseInt(limitStr) : 20;
-            return search(uri.getLastPathSegment(), limit);
-
+            //String limitStr = uri.getQueryParameter("limit");
+            //int limit = limitStr != null ? Integer.parseInt(limitStr) : SEARCH_LIMIT;
+            return search(uri.getLastPathSegment(), SEARCH_LIMIT);
         } else {
             Log.d(TAG, "Unknown uri to query: " + uri);
             throw new IllegalArgumentException("Unknown Uri: " + uri);
