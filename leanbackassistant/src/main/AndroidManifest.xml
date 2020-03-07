@@ -42,13 +42,13 @@
         <!--    CHANNELS    -->
 
         <service
-            android:name=".channels.SynchronizeDatabaseJobService"
+            android:name=".common.SynchronizeDatabaseJobService"
             android:permission="android.permission.BIND_JOB_SERVICE"
             android:enabled="true"
             android:exported="true"/>
 
         <receiver
-            android:name=".channels.RunOnInstallReceiver"
+            android:name=".common.RunOnInstallReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

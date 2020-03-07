@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.liskovsoft.leanbackassistant.channels;
+package com.liskovsoft.leanbackassistant.media;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,11 +52,11 @@ public final class Playlist {
         return mName;
     }
 
-    void setClips(List<Clip> clips) {
+    public void setClips(List<Clip> clips) {
         mClips = clips;
     }
 
-    List<Clip> getClips() {
+    public List<Clip> getClips() {
         return mClips;
     }
 
@@ -64,7 +64,7 @@ public final class Playlist {
         return mDescription;
     }
 
-    String getPlaylistId() {
+    public String getPlaylistId() {
         return mPlaylistId;
     }
 
@@ -76,12 +76,12 @@ public final class Playlist {
         mChannelPublished = channelPublished;
     }
 
-    void setChannelPublishedId(long id) {
+    public void setChannelPublishedId(long id) {
         mChannelPublished = true;
         mChannelId = id;
     }
 
-    long getChannelId() {
+    public long getChannelId() {
         return mChannelId;
     }
 

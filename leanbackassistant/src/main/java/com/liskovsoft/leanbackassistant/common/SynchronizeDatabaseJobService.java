@@ -1,4 +1,4 @@
-package com.liskovsoft.leanbackassistant.channels;
+package com.liskovsoft.leanbackassistant.common;
 
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
@@ -9,6 +9,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build.VERSION;
+import com.liskovsoft.leanbackassistant.channels.ChannelsProvider;
+import com.liskovsoft.leanbackassistant.media.ClipService;
+import com.liskovsoft.leanbackassistant.media.ClipServiceCached;
+import com.liskovsoft.leanbackassistant.media.Playlist;
+import com.liskovsoft.leanbackassistant.recommendations.RecommendationsProvider;
+import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.prefs.GlobalPreferences;
 
@@ -91,6 +97,7 @@ public class SynchronizeDatabaseJobService extends JobService {
      */
     private class SynchronizeDatabaseTask extends AsyncTask<Void, Void, Exception> {
         private final GlobalPreferences mPrefs;
+        private final ClipService mService;
         private Context mContext;
         private JobParameters mJobParameters;
 
@@ -98,30 +105,54 @@ public class SynchronizeDatabaseJobService extends JobService {
             mContext = context;
             mJobParameters = jobParameters;
             mPrefs = GlobalPreferences.instance(mContext);
+            mService = ClipServiceCached.instance(mContext);
         }
 
         @Override
         protected Exception doInBackground(Void... params) {
             Log.d(TAG, "Syncing channels...");
 
-            try {
-                updateOrPublish(MySampleClipApi.getSubscriptionsPlaylist(mContext));
-                updateOrPublish(MySampleClipApi.getRecommendedPlaylist(mContext));
-                updateOrPublish(MySampleClipApi.getHistoryPlaylist(mContext));
-            } catch (Exception e) {
-                e.printStackTrace();
-                return e;
-            }
+            updateChannels();
+            updateRecommendations();
 
             return null;
         }
 
-        private void updateOrPublish(Playlist playlist) {
-            if (playlist != null) {
-                SampleTvProvider.createOrUpdateChannel(mContext, playlist);
+        private void updateChannels() {
+            if (Helpers.isATVChannelsSupported(mContext)) {
+                try {
+                    updateOrPublishChannel(mService.getSubscriptionsPlaylist());
+                    updateOrPublishChannel(mService.getRecommendedPlaylist());
+                    updateOrPublishChannel(mService.getHistoryPlaylist());
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                    e.printStackTrace();
+                }
             }
         }
 
+        private void updateRecommendations() {
+            if (Helpers.isATVRecommendationsSupported(mContext)) {
+                try {
+                    updateOrPublishRecommendations(mService.getRecommendedPlaylist());
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        private void updateOrPublishRecommendations(Playlist playlist) {
+            if (playlist != null) {
+                RecommendationsProvider.createOrUpdateRecommendations(mContext, playlist);
+            }
+        }
+
+        private void updateOrPublishChannel(Playlist playlist) {
+            if (playlist != null) {
+                ChannelsProvider.createOrUpdateChannel(mContext, playlist);
+            }
+        }
         @Override
         protected void onPostExecute(Exception e) {
             if (e != null) {
@@ -134,5 +165,6 @@ public class SynchronizeDatabaseJobService extends JobService {
             mSynchronizeDatabaseTask = null;
             jobFinished(mJobParameters, false);
         }
+
     }
 }

@@ -50,7 +50,7 @@ public class RecommendationBuilder {
         return this;
     }
 
-    public Notification build() throws IOException {
+    public Notification build() {
         Notification notification = new NotificationCompat.BigPictureStyle(
                 new NotificationCompat.Builder(mContext, NotificationCompat.CATEGORY_RECOMMENDATION)
                         .setContentTitle(mTitle)

@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.liskovsoft.leanbackassistant.channels.scheduler;
+package com.liskovsoft.leanbackassistant.media.scheduler;
 
 /**
  * This class encapsulates all the clip fields that are passed to the AddWatchNextService which is

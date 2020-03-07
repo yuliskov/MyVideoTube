@@ -22,14 +22,16 @@ import androidx.tvprovider.media.tv.TvContractCompat.Channels;
 import androidx.tvprovider.media.tv.WatchNextProgram;
 import android.text.TextUtils;
 
-import com.liskovsoft.leanbackassistant.channels.scheduler.ClipData;
+import com.liskovsoft.leanbackassistant.media.Clip;
+import com.liskovsoft.leanbackassistant.media.Playlist;
+import com.liskovsoft.leanbackassistant.media.scheduler.ClipData;
 import com.liskovsoft.leanbackassistant.utils.AppUtil;
 import com.liskovsoft.sharedutils.mylogger.Log;
 
 import java.util.List;
 
-public class SampleTvProvider {
-    private static final String TAG = SampleTvProvider.class.getSimpleName();
+public class ChannelsProvider {
+    private static final String TAG = ChannelsProvider.class.getSimpleName();
     private static final String SCHEME = "tvhomescreenchannels";
     private static final String APPS_LAUNCH_HOST = "com.google.android.tvhomescreenchannels";
     private static final String PLAY_VIDEO_ACTION_PATH = "playvideo";
@@ -53,12 +55,12 @@ public class SampleTvProvider {
             TvContract.Channels.COLUMN_DISPLAY_NAME,
             TvContractCompat.Channels.COLUMN_BROWSABLE};
 
-    private SampleTvProvider() {
+    private ChannelsProvider() {
     }
 
     static private String createInputId(Context context) {
         // TODO: tv input service component name
-        ComponentName cName = new ComponentName(context, SampleTvProvider.class.getName());
+        ComponentName cName = new ComponentName(context, ChannelsProvider.class.getName());
         return TvContractCompat.buildInputId(cName);
     }
 

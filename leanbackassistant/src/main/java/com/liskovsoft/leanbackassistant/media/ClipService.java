@@ -1,4 +1,4 @@
-package com.liskovsoft.leanbackassistant.channels;
+package com.liskovsoft.leanbackassistant.media;
 
 import android.content.Context;
 import androidx.tvprovider.media.tv.TvContractCompat;
@@ -9,7 +9,7 @@ import com.liskovsoft.youtubeapi.adapters.YouTubeVideoService;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MySampleClipApi {
+public class ClipService {
     private static final int SUBSCRIPTIONS_ID = 1;
     private static final int HISTORY_ID = 2;
     private static final int RECOMMENDED_ID = 3;
@@ -22,13 +22,27 @@ public class MySampleClipApi {
     private static final String SUBSCRIPTIONS_URL = "https://www.youtube.com/tv#/zylon-surface?c=FEsubscriptions&resume";
     private static final String HISTORY_URL = "https://www.youtube.com/tv#/zylon-surface?c=FEmy_youtube&resume";
     private static final String RECOMMENDED_URL = "https://www.youtube.com/tv#/zylon-surface?c=default&resume";
+    private static ClipService mInstance;
+    private final Context mContext;
 
-    public static Playlist getSubscriptionsPlaylist(Context context) {
+    public ClipService(Context context) {
+        mContext = context;
+    }
+
+    public static ClipService instance(Context context) {
+        if (mInstance == null) {
+            mInstance = new ClipService(context);
+        }
+
+        return mInstance;
+    }
+
+    public Playlist getSubscriptionsPlaylist() {
         YouTubeVideoService service = YouTubeVideoService.instance();
         List<Video> subscriptions = service.getSubscriptions();
 
         Playlist playlist = new Playlist(
-                context.getResources().getString(R.string.subscriptions_playlist_name),
+                mContext.getResources().getString(R.string.subscriptions_playlist_name),
                 Integer.toString(SUBSCRIPTIONS_ID));
         playlist.setChannelKey(SUBS_CHANNEL_ID);
         playlist.setProgramsKey(SUBS_PROGRAMS_IDS);
@@ -49,12 +63,12 @@ public class MySampleClipApi {
         return playlist;
     }
 
-    public static Playlist getHistoryPlaylist(Context context) {
+    public Playlist getHistoryPlaylist() {
         YouTubeVideoService service = YouTubeVideoService.instance();
         List<Video> history = service.getHistory();
 
         Playlist playlist = new Playlist(
-                context.getResources().getString(R.string.history_playlist_name),
+                mContext.getResources().getString(R.string.history_playlist_name),
                 Integer.toString(HISTORY_ID));
         playlist.setChannelKey(HISTORY_CHANNEL_ID);
         playlist.setProgramsKey(HISTORY_PROGRAMS_IDS);
@@ -75,12 +89,12 @@ public class MySampleClipApi {
         return playlist;
     }
 
-    public static Playlist getRecommendedPlaylist(Context context) {
+    public Playlist getRecommendedPlaylist() {
         YouTubeVideoService service = YouTubeVideoService.instance();
         List<Video> recommended = service.getRecommended();
 
         Playlist playlist = new Playlist(
-                context.getResources().getString(R.string.recommended_playlist_name),
+                mContext.getResources().getString(R.string.recommended_playlist_name),
                 Integer.toString(RECOMMENDED_ID));
         playlist.setChannelKey(RECOMMENDED_CHANNEL_ID);
         playlist.setProgramsKey(RECOMMENDED_PROGRAMS_IDS);
@@ -101,7 +115,7 @@ public class MySampleClipApi {
         return playlist;
     }
 
-    private static List<Clip> convertToClips(List<Video> videos) {
+    private List<Clip> convertToClips(List<Video> videos) {
         if (videos != null) {
             List<Clip> clips = new ArrayList<>();
 

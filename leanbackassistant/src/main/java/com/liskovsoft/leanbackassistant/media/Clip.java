@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.liskovsoft.leanbackassistant.channels;
+package com.liskovsoft.leanbackassistant.media;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -79,11 +79,11 @@ public class Clip implements Parcelable {
         mViewCount = in.readInt();
     }
 
-    long getProgramId() {
+    public long getProgramId() {
         return mProgramId;
     }
 
-    void setProgramId(long programId) {
+    public void setProgramId(long programId) {
         mProgramId = programId;
     }
 
@@ -103,11 +103,11 @@ public class Clip implements Parcelable {
         return mDescription;
     }
 
-    String getVideoUrl() {
+    public String getVideoUrl() {
         return mVideoUrl;
     }
 
-    String getPreviewVideoUrl() {
+    public String getPreviewVideoUrl() {
         return mPreviewVideoUrl;
     }
 

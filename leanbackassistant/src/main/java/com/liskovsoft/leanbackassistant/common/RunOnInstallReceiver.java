@@ -1,4 +1,4 @@
-package com.liskovsoft.leanbackassistant.channels;
+package com.liskovsoft.leanbackassistant.common;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -24,7 +24,7 @@ public class RunOnInstallReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG, "Synchronizing database");
 
-        if (Helpers.isATVChannelsSupported(context)) {
+        if (Helpers.isATVChannelsSupported(context) || Helpers.isATVRecommendationsSupported(context)) {
             SynchronizeDatabaseJobService.schedule(context);
         }
     }
