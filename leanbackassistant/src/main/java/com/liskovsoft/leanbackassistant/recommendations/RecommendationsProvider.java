@@ -17,7 +17,7 @@ import okhttp3.Response;
 @TargetApi(21)
 public class RecommendationsProvider {
     private static final String TAG = RecommendationsProvider.class.getSimpleName();
-    private static final int MAX_RECOMMENDATIONS = 3;
+    private static final int MAX_RECOMMENDATIONS = 30;
 
     public static void createOrUpdateRecommendations(Context context, Playlist playlist) {
         if (playlist != null) {
@@ -38,7 +38,7 @@ public class RecommendationsProvider {
                         image = BitmapFactory.decodeStream(response.body().byteStream());
                     }
 
-                    Notification rec = new RecommendationBuilderOld()
+                    Notification rec = new RecommendationBuilder()
                             .setContext(context)
                             .setDescription(clip.getDescription())
                             .setImage(image)
