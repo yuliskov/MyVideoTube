@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import com.liskovsoft.leanbackassistant.R;
 import com.liskovsoft.leanbackassistant.media.Clip;
 import com.liskovsoft.leanbackassistant.media.Playlist;
+import com.liskovsoft.leanbackassistant.utils.AppUtil;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.okhttp.OkHttpHelpers;
 import okhttp3.Response;
@@ -38,25 +39,11 @@ public class RecommendationsProvider {
                         .setImage(image)
                         .setTitle(clip.getTitle())
                         .setSmallIcon(R.drawable.app_icon)
+                        .setIntent(AppUtil.getInstance(context).createAppPendingIntent(clip.getVideoUrl()))
                         .build();
 
                 Log.d(TAG, "Posting recommendation: " + clip.getTitle());
             }
         }
     }
-
-    //private PendingIntent buildPendingIntent(Movie movie) {
-    //    Intent detailsIntent = new Intent(this, DetailsActivity.class);
-    //    detailsIntent.putExtra("Movie", movie);
-    //
-    //    TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-    //    stackBuilder.addParentStack(DetailsActivity.class);
-    //    stackBuilder.addNextIntent(detailsIntent);
-    //    // Ensure a unique PendingIntents, otherwise all
-    //    // recommendations end up with the same PendingIntent
-    //    detailsIntent.setAction(Long.toString(movie.getId()));
-    //
-    //    PendingIntent intent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-    //    return intent;
-    //}
 }

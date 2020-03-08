@@ -1,5 +1,8 @@
 package com.liskovsoft.leanbackassistant.utils;
 
+import android.annotation.TargetApi;
+import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -55,6 +58,21 @@ public class AppUtil {
         intent.setClassName(getAppPackageName(), getBootstrapClassName());
         intent.putExtra(GlobalConstants.STANDALONE_PLAYER, true);
 
+        return intent;
+    }
+
+    @TargetApi(16)
+    public PendingIntent createAppPendingIntent(String url) {
+        Intent detailsIntent = createAppIntent(url);
+
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(mContext);
+        //stackBuilder.addParentStack(DetailsActivity.class);
+        stackBuilder.addNextIntent(detailsIntent);
+        // Ensure a unique PendingIntents, otherwise all
+        // recommendations end up with the same PendingIntent
+        detailsIntent.setAction(url);
+
+        PendingIntent intent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         return intent;
     }
 }
