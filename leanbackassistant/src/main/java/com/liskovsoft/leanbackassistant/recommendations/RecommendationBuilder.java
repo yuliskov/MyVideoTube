@@ -1,15 +1,12 @@
 package com.liskovsoft.leanbackassistant.recommendations;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recommendation.app.ContentRecommendation;
 import com.liskovsoft.leanbackassistant.R;
-
-import java.io.IOException;
 
 @RequiresApi(21)
 public class RecommendationBuilder {
@@ -17,7 +14,7 @@ public class RecommendationBuilder {
     private String mDescription;
     private Context mContext;
     private int mSmallIcon;
-    private PendingIntent mIntent;
+    private Intent mIntent;
     private Bitmap mImage;
 
     public RecommendationBuilder setTitle(String title) {
@@ -45,27 +42,21 @@ public class RecommendationBuilder {
         return this;
     }
 
-    public RecommendationBuilder setIntent(PendingIntent intent) {
+    public RecommendationBuilder setIntent(Intent intent) {
         mIntent = intent;
         return this;
     }
 
-    public Notification build() {
-        Notification notification = new NotificationCompat.BigPictureStyle(
-                new NotificationCompat.Builder(mContext, NotificationCompat.CATEGORY_RECOMMENDATION)
-                        .setContentTitle(mTitle)
-                        .setContentText(mDescription)
-                        .setPriority(NotificationCompat.PRIORITY_MAX)
-                        .setLocalOnly(true)
-                        .setOngoing(true)
-                        .setColor(ContextCompat.getColor(mContext, R.color.fastlane_background))
-                        .setCategory(Notification.CATEGORY_RECOMMENDATION)
-                        .setLargeIcon(mImage)
-                        .setSmallIcon(mSmallIcon)
-                        .setContentIntent(mIntent)
-                        //.setExtras(mExtras)
-                        ).build();
+    public ContentRecommendation build() {
+        ContentRecommendation rec = new ContentRecommendation.Builder()
+                .setTitle(mTitle)
+                .setText(mDescription)
+                .setColor(ContextCompat.getColor(mContext, R.color.fastlane_background))
+                .setContentImage(mImage)
+                .setBadgeIcon(mSmallIcon)
+                .setContentIntentData(ContentRecommendation.INTENT_TYPE_ACTIVITY, mIntent, 0, null)
+                .build();
 
-        return notification;
+        return rec;
     }
 }

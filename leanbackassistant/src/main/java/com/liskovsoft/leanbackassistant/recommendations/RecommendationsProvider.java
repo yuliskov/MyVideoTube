@@ -1,6 +1,8 @@
 package com.liskovsoft.leanbackassistant.recommendations;
 
 import android.annotation.TargetApi;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -19,30 +21,36 @@ public class RecommendationsProvider {
 
     public static void createOrUpdateRecommendations(Context context, Playlist playlist) {
         if (playlist != null) {
-            int clipCounter = 0;
-            for (Clip clip : playlist.getClips()) {
-                if (clipCounter++ > MAX_RECOMMENDATIONS) {
-                    break;
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            if (notificationManager != null) {
+                int clipCounter = 0;
+                for (Clip clip : playlist.getClips()) {
+                    if (clipCounter++ > MAX_RECOMMENDATIONS) {
+                        break;
+                    }
+
+                    Response response = OkHttpHelpers.doGetOkHttpRequest(clip.getCardImageUrl());
+
+                    Bitmap image = null;
+
+                    if (response.body() != null) {
+                        image = BitmapFactory.decodeStream(response.body().byteStream());
+                    }
+
+                    Notification rec = new RecommendationBuilderOld()
+                            .setContext(context)
+                            .setDescription(clip.getDescription())
+                            .setImage(image)
+                            .setTitle(clip.getTitle())
+                            .setSmallIcon(R.drawable.app_icon)
+                            .setIntent(AppUtil.getInstance(context).createAppPendingIntent(clip.getVideoUrl()))
+                            .build();
+
+                    notificationManager.notify(Integer.parseInt(clip.getClipId()), rec);
+
+                    Log.d(TAG, "Posting recommendation: " + clip.getTitle());
                 }
-
-                Response response = OkHttpHelpers.doGetOkHttpRequest(clip.getCardImageUrl());
-
-                Bitmap image = null;
-
-                if (response.body() != null) {
-                    image = BitmapFactory.decodeStream(response.body().byteStream());
-                }
-
-                new RecommendationBuilder()
-                        .setContext(context)
-                        .setDescription(clip.getDescription())
-                        .setImage(image)
-                        .setTitle(clip.getTitle())
-                        .setSmallIcon(R.drawable.app_icon)
-                        .setIntent(AppUtil.getInstance(context).createAppPendingIntent(clip.getVideoUrl()))
-                        .build();
-
-                Log.d(TAG, "Posting recommendation: " + clip.getTitle());
             }
         }
     }

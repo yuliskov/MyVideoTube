@@ -68,9 +68,6 @@ public class AppUtil {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(mContext);
         //stackBuilder.addParentStack(DetailsActivity.class);
         stackBuilder.addNextIntent(detailsIntent);
-        // Ensure a unique PendingIntents, otherwise all
-        // recommendations end up with the same PendingIntent
-        detailsIntent.setAction(url);
 
         PendingIntent intent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
         return intent;
