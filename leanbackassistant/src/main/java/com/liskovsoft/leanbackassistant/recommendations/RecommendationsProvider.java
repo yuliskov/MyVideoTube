@@ -26,14 +26,6 @@ public class RecommendationsProvider {
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
             if (notificationManager != null) {
-                if (VERSION.SDK_INT >= 26) {
-                    NotificationChannel notificationChannel =
-                            new NotificationChannel(RecommendationBuilder.CHANNEL_ID, RecommendationBuilder.CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH);
-                    notificationChannel.enableLights(false);
-                    notificationChannel.enableVibration(false);
-                    notificationManager.createNotificationChannel(notificationChannel);
-                }
-                
                 int clipCounter = 0;
                 for (Clip clip : playlist.getClips()) {
                     if (clipCounter++ > MAX_RECOMMENDATIONS) {
