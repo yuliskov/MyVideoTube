@@ -11,6 +11,8 @@ import com.liskovsoft.leanbackassistant.R;
 
 @RequiresApi(21)
 public class RecommendationBuilder {
+    public static final String CHANNEL_ID = NotificationCompat.CATEGORY_RECOMMENDATION;
+    public static final String CHANNEL_NAME = "Recommendations";
     private String mTitle;
     private String mDescription;
     private Context mContext;
@@ -50,7 +52,7 @@ public class RecommendationBuilder {
 
     public Notification build() {
         Notification notification = new NotificationCompat.BigPictureStyle(
-                new NotificationCompat.Builder(mContext, NotificationCompat.CATEGORY_RECOMMENDATION)
+                new NotificationCompat.Builder(mContext, CHANNEL_ID)
                         .setContentTitle(mTitle)
                         .setContentText(mDescription)
                         .setPriority(NotificationCompat.PRIORITY_MAX)

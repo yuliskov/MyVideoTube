@@ -2,10 +2,12 @@ package com.liskovsoft.leanbackassistant.recommendations;
 
 import android.annotation.TargetApi;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build.VERSION;
 import com.liskovsoft.leanbackassistant.R;
 import com.liskovsoft.leanbackassistant.media.Clip;
 import com.liskovsoft.leanbackassistant.media.Playlist;
@@ -24,6 +26,14 @@ public class RecommendationsProvider {
             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
             if (notificationManager != null) {
+                if (VERSION.SDK_INT >= 26) {
+                    NotificationChannel notificationChannel =
+                            new NotificationChannel(RecommendationBuilder.CHANNEL_ID, RecommendationBuilder.CHANNEL_NAME, NotificationManager.IMPORTANCE_HIGH);
+                    notificationChannel.enableLights(false);
+                    notificationChannel.enableVibration(false);
+                    notificationManager.createNotificationChannel(notificationChannel);
+                }
+                
                 int clipCounter = 0;
                 for (Clip clip : playlist.getClips()) {
                     if (clipCounter++ > MAX_RECOMMENDATIONS) {
