@@ -1,4 +1,4 @@
-package com.liskovsoft.leanbackassistant.common;
+package com.liskovsoft.leanbackassistant.channels;
 
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
@@ -9,7 +9,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Build.VERSION;
-import com.liskovsoft.leanbackassistant.channels.ChannelsProvider;
 import com.liskovsoft.leanbackassistant.media.ClipService;
 import com.liskovsoft.leanbackassistant.media.ClipServiceCached;
 import com.liskovsoft.leanbackassistant.media.Playlist;
@@ -134,7 +133,20 @@ public class SynchronizeDatabaseJobService extends JobService {
         private void updateRecommendations() {
             if (Helpers.isATVRecommendationsSupported(mContext)) {
                 try {
-                    updateOrPublishRecommendations(mService.getRecommendedPlaylist());
+                    Playlist playlist = null;
+                    switch (mPrefs.getRecommendedPlaylistType()) {
+                        case GlobalPreferences.PLAYLIST_TYPE_RECOMMENDATIONS:
+                            playlist = mService.getRecommendedPlaylist();
+                            break;
+                        case GlobalPreferences.PLAYLIST_TYPE_SUBSCRIPTIONS:
+                            playlist = mService.getSubscriptionsPlaylist();
+                            break;
+                        case GlobalPreferences.PLAYLIST_TYPE_HISTORY:
+                            playlist = mService.getHistoryPlaylist();
+                            break;
+                    }
+
+                    updateOrPublishRecommendations(playlist);
                 } catch (Exception e) {
                     Log.e(TAG, e.getMessage());
                     e.printStackTrace();

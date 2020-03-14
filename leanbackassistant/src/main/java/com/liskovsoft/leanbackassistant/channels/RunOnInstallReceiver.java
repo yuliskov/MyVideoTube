@@ -1,4 +1,4 @@
-package com.liskovsoft.leanbackassistant.common;
+package com.liskovsoft.leanbackassistant.channels;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
