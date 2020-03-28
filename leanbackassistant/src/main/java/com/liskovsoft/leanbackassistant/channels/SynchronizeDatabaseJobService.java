@@ -155,16 +155,17 @@ public class SynchronizeDatabaseJobService extends JobService {
         }
 
         private void updateOrPublishRecommendations(Playlist playlist) {
-            if (playlist != null) {
+            if (checkPlaylist(playlist)) {
                 RecommendationsProvider.createOrUpdateRecommendations(mContext, playlist);
             }
         }
 
         private void updateOrPublishChannel(Playlist playlist) {
-            if (playlist != null) {
+            if (checkPlaylist(playlist)) {
                 ChannelsProvider.createOrUpdateChannel(mContext, playlist);
             }
         }
+
         @Override
         protected void onPostExecute(Exception e) {
             if (e != null) {
@@ -178,5 +179,9 @@ public class SynchronizeDatabaseJobService extends JobService {
             jobFinished(mJobParameters, false);
         }
 
+    }
+
+    private boolean checkPlaylist(Playlist playlist) {
+        return playlist != null && playlist.getClips() != null && playlist.getClips().size() > 0;
     }
 }
