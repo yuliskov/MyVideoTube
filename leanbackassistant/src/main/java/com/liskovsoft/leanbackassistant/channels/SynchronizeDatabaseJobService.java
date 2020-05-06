@@ -40,16 +40,6 @@ public class SynchronizeDatabaseJobService extends JobService {
             Log.d(TAG, "Registering Channels update job...");
             JobScheduler scheduler = context.getSystemService(JobScheduler.class);
 
-            //// run one-shot job
-            //scheduler.schedule(
-            //        new JobInfo.Builder(0, new ComponentName(context, SynchronizeDatabaseJobService.class))
-            //                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-            //                .setRequiresDeviceIdle(false)
-            //                .setRequiresCharging(false)
-            //                .setMinimumLatency(1)
-            //                .setOverrideDeadline(1)
-            //                .build());
-
             // setup scheduled job
             scheduler.schedule(
                     new JobInfo.Builder(1, new ComponentName(context, SynchronizeDatabaseJobService.class))
@@ -104,7 +94,7 @@ public class SynchronizeDatabaseJobService extends JobService {
             mContext = context;
             mJobParameters = jobParameters;
             mPrefs = GlobalPreferences.instance(mContext);
-            mService = ClipServiceCached.instance(mContext);
+            mService = ClipService.instance(mContext);
         }
 
         @Override
@@ -182,6 +172,6 @@ public class SynchronizeDatabaseJobService extends JobService {
     }
 
     private boolean checkPlaylist(Playlist playlist) {
-        return playlist != null && playlist.getClips() != null && playlist.getClips().size() > 0;
+        return playlist != null && playlist.getClips() != null;
     }
 }
