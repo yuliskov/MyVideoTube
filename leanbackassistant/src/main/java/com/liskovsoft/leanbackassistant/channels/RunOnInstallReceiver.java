@@ -3,8 +3,8 @@ package com.liskovsoft.leanbackassistant.channels;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 import com.liskovsoft.sharedutils.helpers.Helpers;
+import com.liskovsoft.sharedutils.mylogger.Log;
 
 /*
  * The RunOnInstallReceiver is automatically invoked when the app is first installed from Play
