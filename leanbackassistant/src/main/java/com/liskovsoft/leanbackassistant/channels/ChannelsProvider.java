@@ -226,8 +226,9 @@ public class ChannelsProvider {
         }
 
         // this isn't robust way because of localized strings
-        //long foundId = findChannelByName(context, playlist.getName());
-        long foundId = findChannelByProviderId(context, playlist.getPlaylistId());
+        long foundId = findChannelByName(context, playlist.getName());
+        // Not working!!!
+        //long foundId = findChannelByProviderId(context, playlist.getPlaylistId());
 
         if (foundId != -1) {
             Log.d(TAG, "Oops: channel already published but not memorized by the app. Doing update instead... " + foundId);
