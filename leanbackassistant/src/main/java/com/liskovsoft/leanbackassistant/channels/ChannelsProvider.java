@@ -29,6 +29,7 @@ import com.liskovsoft.leanbackassistant.utils.AppUtil;
 import com.liskovsoft.sharedutils.mylogger.Log;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ChannelsProvider {
     private static final String TAG = ChannelsProvider.class.getSimpleName();
@@ -224,7 +225,9 @@ public class ChannelsProvider {
             return oldChannelId;
         }
 
-        long foundId = findChannel(context, playlist.getName());
+        // this isn't robust way because of localized strings
+        //long foundId = findChannelByName(context, playlist.getName());
+        long foundId = findChannelByProviderId(context, playlist.getPlaylistId());
 
         if (foundId != -1) {
             Log.d(TAG, "Oops: channel already published but not memorized by the app. Doing update instead... " + foundId);
@@ -233,6 +236,8 @@ public class ChannelsProvider {
             addClipsToChannel(context, foundId, playlist.getClips());
             return foundId;
         }
+
+        Log.d(TAG, "Creating channel: " + playlist.getName());
 
         long channelId = createChannel(context, playlist);
 
@@ -319,7 +324,15 @@ public class ChannelsProvider {
     }
 
     @WorkerThread
-    static void deleteChannel(Context context, long channelId) {
+    public static void deleteAllChannels(Context context) {
+         visitChannels(context, (Channel channel) -> {
+             deleteChannel(context, channel.getId());
+             return true;
+         });
+    }
+
+    @WorkerThread
+    public static void deleteChannel(Context context, long channelId) {
         if (channelId == -1) {
             Log.d(TAG, "Invalid channel id " + channelId);
             return;
@@ -439,7 +452,54 @@ public class ChannelsProvider {
         return builder;
     }
 
-    private static long findChannel(Context context, String name) {
+    /**
+     * Not robust way because its behavior depends on current locale
+     */
+    private static long findChannelByName(Context context, String name) {
+        final AtomicLong channelId = new AtomicLong(-1);
+
+        visitChannels(context, (Channel channel) -> {
+            if (name.equals(channel.getDisplayName())) {
+                if (channelId.get() == -1) {
+                    Log.d(TAG, "Channel found. DisplayName: " + name);
+                    channelId.set(channel.getId());
+                } else {
+                    Log.d(TAG, "Duplicate channel deleted. DisplayName: " + name);
+                    deleteChannel(context, channel.getId());
+                }
+            }
+
+            return true; // continue visiting
+        });
+
+        return channelId.get();
+    }
+
+    private static long findChannelByProviderId(Context context, String providerId) {
+        final AtomicLong channelId = new AtomicLong(-1);
+
+        visitChannels(context, (Channel channel) -> {
+            if (providerId.equals(channel.getInternalProviderId())) {
+                if (channelId.get() == -1) {
+                    Log.d(TAG, "Channel found. ProviderId: " + providerId);
+                    channelId.set(channel.getId());
+                } else {
+                    Log.d(TAG, "Duplicate channel deleted. ProviderId: " + providerId);
+                    deleteChannel(context, channel.getId());
+                }
+            }
+
+            return true; // continue visiting
+        });
+
+        return channelId.get();
+    }
+
+    private interface ChannelVisitor {
+        boolean onChannel(Channel channel);
+    }
+    
+    private static void visitChannels(Context context, ChannelVisitor visitor) {
         Cursor cursor = context.getContentResolver().query(
                 TvContractCompat.Channels.CONTENT_URI,
                 CHANNELS_PROJECTION,
@@ -448,23 +508,16 @@ public class ChannelsProvider {
                 null
         );
 
-        long channelId = -1;
-
         if (cursor != null) {
             try {
                 if (cursor.moveToFirst()) {
                     do {
                         Channel channel = Channel.fromCursor(cursor);
-                        if (name.equals(channel.getDisplayName())) {
-                            if (channelId == -1) {
-                                Log.d(TAG, "Channel found: " + name);
-                                channelId = channel.getId();
-                            } else {
-                                Log.d(TAG, "Duplicate channel deleted: " + name);
-                                deleteChannel(context, channel.getId());
-                            }
-                        }
+                        boolean continueVisiting = visitor.onChannel(channel);
 
+                        if (!continueVisiting) {
+                            break;
+                        }
                     } while (cursor.moveToNext());
                 }
             } finally {
@@ -472,147 +525,5 @@ public class ChannelsProvider {
             }
 
         }
-
-        return channelId;
     }
-
-    //@WorkerThread
-    //static void updateChannelOld(Context context, Playlist playlist) {
-    //    long channelId = playlist.getChannelId();
-    //
-    //    if (channelId == -1) {
-    //        Log.d(TAG, "Error: channel not published yet: " + channelId);
-    //        return;
-    //    }
-    //
-    //    writeChannelLogo(context, channelId, playlist.getLogoResId());
-    //
-    //    Builder builder = createChannelBuilder(context, playlist);
-    //
-    //    int rowsUpdated = context.getContentResolver().update(
-    //            TvContractCompat.buildChannelUri(channelId), builder.build().toContentValues(), null, null);
-    //
-    //    if (rowsUpdated < 1) {
-    //        Log.e(TAG, "Update channel failed");
-    //    } else {
-    //        Log.d(TAG, "Channel updated " + playlist.getName());
-    //    }
-    //}
-
-    //@WorkerThread
-    //static long addChannel(Context context, Playlist playlist) {
-    //    long oldChannelId = playlist.getChannelId();
-    //
-    //    if (oldChannelId != -1) {
-    //        Log.d(TAG, "Error: channel already published: " + oldChannelId);
-    //        return oldChannelId;
-    //    }
-    //
-    //    long foundId = findChannel(context, playlist.getName());
-    //
-    //    if (foundId != -1) {
-    //        Log.d(TAG, "Error: channel already published but not memorized by the app: " + foundId);
-    //        playlist.setChannelPublishedId(foundId);
-    //        addClipsToChannel(context, foundId, playlist.getClips());
-    //        return foundId;
-    //    }
-    //
-    //    Channel.Builder builder = createChannelBuilder(context, playlist);
-    //
-    //    Uri channelUri = null;
-    //
-    //    try {
-    //        channelUri = context.getContentResolver().insert(Channels.CONTENT_URI,
-    //                builder.build().toContentValues());
-    //    } catch (Exception e) { // channels not supported
-    //        Log.e(TAG, e.getMessage());
-    //        e.printStackTrace();
-    //    }
-    //
-    //    if (channelUri == null || channelUri.equals(Uri.EMPTY)) {
-    //        Log.e(TAG, "Insert channel failed");
-    //        return 0;
-    //    }
-    //
-    //    long channelId = ContentUris.parseId(channelUri);
-    //
-    //    playlist.setChannelPublishedId(channelId);
-    //
-    //    writeChannelLogo(context, channelId, playlist.getLogoResId());
-    //
-    //    addClipsToChannel(context, channelId, playlist.getClips());
-    //
-    //    return channelId;
-    //}
-
-    //@WorkerThread
-    //static void updateProgramsClips(Context context, List<Clip> wantClipsProgramsUpdate) {
-    //    for (Clip clip : wantClipsProgramsUpdate) {
-    //        SampleTvProvider.updateProgramClip(context, clip);
-    //    }
-    //}
-    //
-    //@WorkerThread
-    //static void updateProgramClipSimple(Context context, Clip clip) {
-    //    long programId = clip.getProgramId();
-    //
-    //    if (programId == -1) {
-    //        Log.e(TAG, "Oops. Clip not published yet. Exiting...");
-    //        return;
-    //    }
-    //
-    //    Uri programUri = TvContractCompat.buildPreviewProgramUri(programId);
-    //
-    //    Log.d(TAG, "Updating clip " + programUri);
-    //
-    //    PreviewProgram.Builder builder = createProgramBuilder(context, clip);
-    //
-    //    int rowsUpdated = context.getContentResolver().update(programUri, builder.build().toContentValues(), null, null);
-    //
-    //    if (rowsUpdated < 1) {
-    //        Log.e(TAG, "Update program failed");
-    //    } else {
-    //        Log.d(TAG, "Program clip updated " + clip.getTitle());
-    //    }
-    //}
-
-    //@WorkerThread
-    //static void updateProgramClip(Context context, Clip clip) {
-    //    long programId = clip.getProgramId();
-    //
-    //    if (programId == -1) {
-    //        Log.e(TAG, "Oops. Clip not published yet. Exiting...");
-    //        return;
-    //    }
-    //
-    //    Uri programUri = TvContractCompat.buildPreviewProgramUri(programId);
-    //
-    //    Log.d(TAG, "Updating clip " + programUri);
-    //
-    //    try (Cursor cursor = context.getContentResolver().query(programUri, null, null, null, null)) {
-    //
-    //        int rowsUpdated = 0;
-    //
-    //        if (cursor != null) {
-    //            if (!cursor.moveToFirst()) {
-    //                Log.e(TAG, "Update program failed");
-    //            }
-    //
-    //            PreviewProgram program = PreviewProgram.fromCursor(cursor);
-    //
-    //            PreviewProgram.Builder builder = createProgramBuilder(new PreviewProgram.Builder(program), context, clip);
-    //
-    //            rowsUpdated = context.getContentResolver().update(programUri, builder.build().toContentValues(), null, null);
-    //        }
-    //
-    //        if (rowsUpdated < 1) {
-    //            Log.e(TAG, "Update program failed");
-    //        } else {
-    //            Log.d(TAG, "Program clip updated " + clip.getTitle());
-    //        }
-    //    } catch (Exception ex) {
-    //        Log.e(TAG, ex.getMessage());
-    //        ex.printStackTrace();
-    //    }
-    //}
 }

@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClipService {
-    private static final int SUBSCRIPTIONS_ID = 1;
-    private static final int HISTORY_ID = 2;
-    private static final int RECOMMENDED_ID = 3;
+    private static final String SUBSCRIPTIONS_ID = "subscriptions";
+    private static final String HISTORY_ID = "history";
+    private static final String RECOMMENDED_ID = "recommended";
     private static final String SUBS_CHANNEL_ID = "subs_channel_id";
     private static final String SUBS_PROGRAMS_IDS = "subs_clips_ids";
     private static final String RECOMMENDED_CHANNEL_ID = "recommended_channel_id";
@@ -43,7 +43,7 @@ public class ClipService {
 
         Playlist playlist = new Playlist(
                 mContext.getResources().getString(R.string.subscriptions_playlist_name),
-                Integer.toString(SUBSCRIPTIONS_ID));
+                SUBSCRIPTIONS_ID);
         playlist.setChannelKey(SUBS_CHANNEL_ID);
         playlist.setProgramsKey(SUBS_PROGRAMS_IDS);
         playlist.setPlaylistUrl(SUBSCRIPTIONS_URL);
@@ -69,7 +69,7 @@ public class ClipService {
 
         Playlist playlist = new Playlist(
                 mContext.getResources().getString(R.string.history_playlist_name),
-                Integer.toString(HISTORY_ID));
+                HISTORY_ID);
         playlist.setChannelKey(HISTORY_CHANNEL_ID);
         playlist.setProgramsKey(HISTORY_PROGRAMS_IDS);
         playlist.setPlaylistUrl(HISTORY_URL);
@@ -95,7 +95,7 @@ public class ClipService {
 
         Playlist playlist = new Playlist(
                 mContext.getResources().getString(R.string.recommended_playlist_name),
-                Integer.toString(RECOMMENDED_ID));
+                RECOMMENDED_ID);
         playlist.setChannelKey(RECOMMENDED_CHANNEL_ID);
         playlist.setProgramsKey(RECOMMENDED_PROGRAMS_IDS);
         playlist.setPlaylistUrl(RECOMMENDED_URL);

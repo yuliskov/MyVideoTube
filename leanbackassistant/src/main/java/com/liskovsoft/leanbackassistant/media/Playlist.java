@@ -34,11 +34,11 @@ public final class Playlist {
     private String mPlaylistUrl;
     private int mLogoResId = -1;
 
-    Playlist(String name, String playlistId) {
+    public Playlist(String name, String playlistId) {
         this(name, Collections.emptyList(), playlistId);
     }
 
-    Playlist(String name, List<Clip> clip, String playlistId) {
+    public Playlist(String name, List<Clip> clip, String playlistId) {
         mName = name;
         mTitle = "playlist title";
         mDescription = "playlist description";
