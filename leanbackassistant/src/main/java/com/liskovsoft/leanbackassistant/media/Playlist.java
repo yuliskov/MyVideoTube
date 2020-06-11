@@ -72,16 +72,16 @@ public final class Playlist {
         return mChannelPublished;
     }
 
-    public void setChannelPublished(boolean channelPublished) {
+    public void setIsPublished(boolean channelPublished) {
         mChannelPublished = channelPublished;
     }
 
-    public void setChannelPublishedId(long id) {
+    public void setPublishedId(long id) {
         mChannelPublished = true;
         mChannelId = id;
     }
 
-    public long getChannelId() {
+    public long getPublishedId() {
         return mChannelId;
     }
 

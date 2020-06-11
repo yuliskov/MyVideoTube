@@ -51,10 +51,13 @@ public class ChannelsProvider {
             Uri.parse("content://android.media.tv/preview_program");
 
     @TargetApi(21)
-    private static String[] CHANNELS_PROJECTION = {
+    private static final String[] CHANNEL_COLUMNS = {
             TvContractCompat.Channels._ID,
-            TvContract.Channels.COLUMN_DISPLAY_NAME,
-            TvContractCompat.Channels.COLUMN_BROWSABLE};
+            TvContractCompat.Channels.COLUMN_DISPLAY_NAME,
+            TvContractCompat.Channels.COLUMN_BROWSABLE,
+            TvContractCompat.Channels.COLUMN_SYSTEM_CHANNEL_KEY,
+            TvContractCompat.Channels.COLUMN_INTERNAL_PROVIDER_ID
+    };
 
     private ChannelsProvider() {
     }
@@ -216,23 +219,20 @@ public class ChannelsProvider {
 
     @WorkerThread
     public static long createOrUpdateChannel(Context context, Playlist playlist) {
-        long oldChannelId = playlist.getChannelId();
+        long oldChannelId = playlist.getPublishedId();
 
         if (oldChannelId != -1) {
-            Log.d(TAG, "Oops: channel already published. Doing update instead... " + oldChannelId);
+            Log.d(TAG, "Oops: channel already published. Doing update instead... oldChannelId: " + oldChannelId);
             updateChannel(context, playlist);
             addClipsToChannel(context, oldChannelId, playlist.getClips());
             return oldChannelId;
         }
-
-        // this isn't robust way because of localized strings
-        long foundId = findChannelByName(context, playlist.getName());
-        // Not working!!!
-        //long foundId = findChannelByProviderId(context, playlist.getPlaylistId());
+        
+        long foundId = findChannelByProviderId(context, playlist.getPlaylistId());
 
         if (foundId != -1) {
-            Log.d(TAG, "Oops: channel already published but not memorized by the app. Doing update instead... " + foundId);
-            playlist.setChannelPublishedId(foundId);
+            Log.d(TAG, "Oops: channel already published but not memorized by the app. Doing update instead... foundId: " + foundId);
+            playlist.setPublishedId(foundId);
             updateChannel(context, playlist);
             addClipsToChannel(context, foundId, playlist.getClips());
             return foundId;
@@ -268,7 +268,7 @@ public class ChannelsProvider {
 
         long channelId = ContentUris.parseId(channelUri);
 
-        playlist.setChannelPublishedId(channelId);
+        playlist.setPublishedId(channelId);
 
         writeChannelLogo(context, channelId, playlist.getLogoResId());
 
@@ -303,7 +303,7 @@ public class ChannelsProvider {
 
     @WorkerThread
     private static void updateChannel(Context context, Playlist playlist) {
-        long channelId = playlist.getChannelId();
+        long channelId = playlist.getPublishedId();
 
         if (channelId == -1) {
             Log.d(TAG, "Error: channel not published yet: " + channelId);
@@ -448,6 +448,7 @@ public class ChannelsProvider {
                 .setType(TvContractCompat.Channels.TYPE_PREVIEW)
                 .setInputId(createInputId(context))
                 .setAppLinkIntent(AppUtil.getInstance(context).createAppIntent(playlist.getPlaylistUrl()))
+                .setSystemChannelKey(playlist.getChannelKey())
                 .setInternalProviderId(playlist.getPlaylistId());
 
         return builder;
@@ -496,6 +497,26 @@ public class ChannelsProvider {
         return channelId.get();
     }
 
+    private static long findChannelByChannelKey(Context context, String channelKey) {
+        final AtomicLong channelId = new AtomicLong(-1);
+
+        visitChannels(context, (Channel channel) -> {
+            if (channelKey.equals(channel.getSystemChannelKey())) {
+                if (channelId.get() == -1) {
+                    Log.d(TAG, "Channel found. ProviderId: " + channelKey);
+                    channelId.set(channel.getId());
+                } else {
+                    Log.d(TAG, "Duplicate channel deleted. ProviderId: " + channelKey);
+                    deleteChannel(context, channel.getId());
+                }
+            }
+
+            return true; // continue visiting
+        });
+
+        return channelId.get();
+    }
+
     private interface ChannelVisitor {
         boolean onChannel(Channel channel);
     }
@@ -503,7 +524,7 @@ public class ChannelsProvider {
     private static void visitChannels(Context context, ChannelVisitor visitor) {
         Cursor cursor = context.getContentResolver().query(
                 TvContractCompat.Channels.CONTENT_URI,
-                CHANNELS_PROJECTION,
+                CHANNEL_COLUMNS,
                 null,
                 null,
                 null
@@ -514,6 +535,7 @@ public class ChannelsProvider {
                 if (cursor.moveToFirst()) {
                     do {
                         Channel channel = Channel.fromCursor(cursor);
+                        Log.d(TAG, "visitChannels. Channel found: " + channel);
                         boolean continueVisiting = visitor.onChannel(channel);
 
                         if (!continueVisiting) {
