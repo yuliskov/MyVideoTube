@@ -1,6 +1,7 @@
 package com.liskovsoft.leanbackassistant.search;
 
 import android.app.SearchManager;
+import android.content.ComponentName;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.UriMatcher;
@@ -10,8 +11,11 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import com.liskovsoft.leanbackassistant.R;
 import com.liskovsoft.myvideotubeapi.Video;
 import com.liskovsoft.myvideotubeapi.VideoService;
+import com.liskovsoft.sharedutils.helpers.AppInfoHelpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.rx.AppSchedulerProvider;
 import com.liskovsoft.sharedutils.rx.SchedulerProvider;
@@ -30,7 +34,6 @@ import java.util.List;
  */
 public class VideoContentProvider extends ContentProvider {
     private static final String TAG = VideoContentProvider.class.getSimpleName();
-    private static final String AUTHORITY = "com.liskovsoft.leanbackassistant";
     private static final int SEARCH_LIMIT = 40;
     private VideoService mService;
 
@@ -39,8 +42,7 @@ public class VideoContentProvider extends ContentProvider {
 
     private UriMatcher mUriMatcher;
 
-    private final String[] queryProjection =
-            new String[] {
+    private final String[] queryProjection = {
                 BaseColumns._ID,
                 MockDatabase.KEY_NAME,
                 MockDatabase.KEY_DESCRIPTION,
@@ -58,7 +60,7 @@ public class VideoContentProvider extends ContentProvider {
                 MockDatabase.KEY_COLUMN_DURATION,
                 MockDatabase.KEY_ACTION,
                 SearchManager.SUGGEST_COLUMN_INTENT_DATA_ID
-            };
+    };
     private CompositeDisposable mDisposable;
     private SchedulerProvider mSchedulerProvider;
     private static List<Video> mCachedVideos;
@@ -67,16 +69,29 @@ public class VideoContentProvider extends ContentProvider {
     public boolean onCreate() {
         mService = new YouTubeVideoService();
         mUriMatcher = buildUriMatcher();
+
         return true;
     }
 
     private UriMatcher buildUriMatcher() {
+        String authority = getAuthority();
+
         UriMatcher uriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-        uriMatcher.addURI(AUTHORITY, "/search/" + SearchManager.SUGGEST_URI_PATH_QUERY, SEARCH_SUGGEST);
-        uriMatcher.addURI(AUTHORITY,
-                "/search/" + SearchManager.SUGGEST_URI_PATH_QUERY + "/*",
-                SEARCH_SUGGEST);
+        uriMatcher.addURI(authority, "/search/" + SearchManager.SUGGEST_URI_PATH_QUERY, SEARCH_SUGGEST);
+        uriMatcher.addURI(authority, "/search/" + SearchManager.SUGGEST_URI_PATH_QUERY + "/*", SEARCH_SUGGEST);
+
         return uriMatcher;
+    }
+
+    private String getAuthority() {
+        String authority = null;
+
+        if (getContext() != null) {
+            authority = getContext().getResources().getString(R.string.search_authority);
+            Log.d(TAG, "Authority found: " + authority);
+        }
+
+        return authority;
     }
 
     @Nullable
